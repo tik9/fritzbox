@@ -1,18 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC1090,SC2154
 
-#************************************************************#
-#** Autor: Johannes Hubig <johannes.hubig@gmail.com>       **#
-#** Autor: Jürgen Key https://elbosso.github.io/index.html **#
-#************************************************************#
-
-# The following script should work from FritzOS 6.0 on-
-# wards.
-#
 # Protokoll TR-064 was used to control the Fritz!Box and
-# Fritz!Repeater. For sure not all commands are
-# available on Fritz!Repeater.
-# Additional info and documentation can be found here:
 
 # http://fritz.box:49000/tr64desc.xml
 # https://wiki.fhem.de/wiki/FRITZBOX#TR-064
@@ -28,9 +17,7 @@ dir=$(dirname "$0")
 DIRECTORY=$(cd "$dir" && pwd)
 source "$DIRECTORY/fritzBoxShellConfig.sh"
 
-#******************************************************#
 #*********************** SCRIPT ***********************#
-#******************************************************#
 
 # Parsing arguments
 # Example:
@@ -52,18 +39,6 @@ while [[ $# -gt 0 ]]; do
     BoxPW="$2"
     shift ; shift
     ;;
-		--repeaterip)
-    RepeaterIP="$2"
-    shift ; shift
-    ;;
-		--repeateruser)
-    RepeaterUSER="$2"
-    shift ; shift
-    ;;
-		--repeaterpw)
-    RepeaterPW="$2"
-    shift ; shift
-    ;;
 		*)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -83,10 +58,8 @@ option1="$1"
 option2="$2"
 option3="$3"
 
-### ----------------------------------------------------------------------------------------------------- ###
 ### --------- FUNCTION getSID is used to get a SID for all requests through AHA-HTTP-Interface----------- ###
 ### ------------------------------- SID is stored then in global variable ------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 # Global variable for SID
 SID=""
@@ -213,9 +186,7 @@ wlan5statistics() {
 		echo "NewGHz 5"
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
 ### -------------------------------- FUNCTION LANstate - TR-064 Protocol -------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 LANstate() {
 		location="/upnp/control/lanethernetifcfg"
@@ -378,9 +349,7 @@ IGDIPstate() {
 
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
 ### ------------------------------ FUNCTION Deviceinfo - TR-064 Protocol -------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 Deviceinfo() {
 		location="/upnp/control/deviceinfo"
@@ -397,47 +366,9 @@ Deviceinfo() {
 
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### --------------------------------- FUNCTION TAM - TR-064 Protocol ------------------------------------ ###
-### -- Function to switch ON or OFF the answering machine and getting info about the answering machine -- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
-TAM() {
-		location="/upnp/control/x_tam"
-		uri="urn:dslforum-org:service:X_AVM-DE_TAM:1"
-
-		if [ "$option3" = "GetInfo" ]; then
-			action='GetInfo'
-			curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewIndex>$option2</NewIndex></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' |sed -En "s/<(.*)>(.*)/\1 \2/p"
-
-		# Switch ON the TAM
-	elif [ "$option3" = "ON" ]; then
-			action='SetEnable'
-			curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewIndex>$option2</NewIndex><NewEnable>1</NewEnable></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' |sed -En "s/<(.*)>(.*)/\1 \2/p"
-			echo "Answering machine is switched ON"
-
-		# Switch OFF the TAM
-	elif [ "$option3" = "OFF" ]; then
-			action='SetEnable'
-			curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewIndex>$option2</NewIndex><NewEnable>0</NewEnable></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' |sed -En "s/<(.*)>(.*)/\1 \2/p"
-			echo "Answering machine is switched OFF"
-
-		# Get CallList from TAM
-	elif [ "$option3" = "GetMsgs" ]; then
-			action='GetMessageList'
-			curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewIndex>$option2</NewIndex></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' |sed -En "s/<(.*)>(.*)/\1 \2/p")
-
-			#WGETresult=$(wget -O - "$curlOutput1" 2>/dev/null) Doesn't work with double quotes. Therefore in line below the shellcheck fails.
-			WGETresult=$(wget -O - $curlOutput1 2>/dev/null)
-			echo "$WGETresult"
-
-		fi
-}
-
-### ----------------------------------------------------------------------------------------------------- ###
 ### ------------------------------ FUNCTION wlanstate - TR-064 Protocol --------------------------------- ###
 ### ----- Function to switch ON or OFF 2.4 and/or 5 Ghz WiFi and also getting the state of the WiFi ----- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 wlanstate() {
 
@@ -472,27 +403,6 @@ wlanstate() {
 	fi
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### --------------------------- FUNCTION RepeaterWLANstate - TR-064 Protocol ---------------------------- ###
-### -------------------------- Function to switch OFF the WiFi of the repeater -------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
-
-# RepeaterWLANstate() {
-
-# 	# Building the inputs for the SOAP Action
-
-# 	location="/upnp/control/wlanconfig1"
-# 	uri="urn:dslforum-org:service:WLANConfiguration:1"
-# 	action='SetEnable'
-# 	echo "Sending Repeater WLAN $1"; curl -k -m 5 --anyauth -u "$RepeaterUSER:$RepeaterPW" "http://$RepeaterIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option2</NewEnable></u:$action></s:Body></s:Envelope>" -s > /dev/null
-
-# }
-
-### ----------------------------------------------------------------------------------------------------- ###
-### --------------------------------- FUNCTION Reboot - TR-064 Protocol --------------------------------- ###
-### ------------------------ Function to reboot the Fritz!Box or Fritz!Repeater ------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
-
 Reboot() {
 
 	# Building the inputs for the SOAP Action
@@ -504,9 +414,6 @@ Reboot() {
 	if [[ "$option2" = "Repeater" ]]; then echo "Sending Reboot command to $1"; curl -k -m 5 --anyauth -u "$RepeaterUSER:$RepeaterPW" "http://$RepeaterIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### ------------------------------------- FUNCTION script_version --------------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 script_version(){
 		echo "fritzBoxShell.sh version ${version}"
@@ -514,22 +421,18 @@ script_version(){
 
 DisplayArguments() {
 	echo ""
-	echo "Invalid Action and/or parameter. Possible combinations:"
+	echo "Invalid Action and/or parameter $option1. Possible combinations:"
 	echo ""
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
 	echo "|  Action      | Parameter              | Description                                                             |"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| DEVICEINFO   | state                  | Show information about your Fritz!Box like ModelName, SN, etc.          |"
+	echo "| info   		 | state                  | Show information about your Fritz!Box like ModelName, SN, etc.          |"
 	echo "| wlan_2g      | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4 Ghz WiFi             |"
 	echo "| wlan_2g      | STATISTICS             | Statistics for the 2,4 Ghz WiFi easily digestible by telegraf           |"
 	echo "| wlan_5g      | 0 or 1 or state        | Switching ON, OFF or checking the state of the 5 Ghz WiFi               |"
 	echo "| wlan_5g      | STATISTICS             | Statistics for the 5 Ghz WiFi easily digestible by telegraf             |"
 	echo "| wlan         | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4Ghz and 5 Ghz WiFi    |"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| TAM          | <index> and GetInfo    | e.g. TAM 0 GetInfo (gives info about answering machine)                 |"
-	echo "| TAM          | <index> and ON or OFF  | e.g. TAM 0 ON (switches ON the answering machine)                       |"
-	echo "| TAM          | <index> and GetMsgs    | e.g. TAM 0 GetMsgs (gives XML formatted list of messages)               |"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
 	echo "| LED          | 0 or 1                 | Switching ON (1) or OFF (0) the LEDs in front of the Fritz!Box          |"
 	echo "| KEYLOCK      | 0 or 1                 | Activate (1) or deactivate (0) the Keylock (buttons de- or activated)   |"
@@ -546,7 +449,7 @@ DisplayArguments() {
 	echo "| UPNPMetaData | state or <filename>    | Full unformatted output of tr64desc.xml to console or file              |"
 	echo "| IGDMetaData  | state or <filename>    | Full unformatted output of igddesc.xml to console or file               |"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| VERSION      |                        | Version of the fritzBoxShell.sh                                         |"
+	echo "| version      |                        | Version of the fritzBoxShell.sh                                         |"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
 	echo ""
 }
@@ -557,7 +460,7 @@ then
   DisplayArguments
 elif [ -z "$2" ]
 then
-        if [ "$option1" = "VERSION" ]; then
+        if [ "$option1" = "version" ]; then
                 script_version
         else DisplayArguments
         fi
@@ -606,21 +509,13 @@ else
 		UPNPMetaData "$option2";
 	elif [ "$option1" = "IGDMetaData" ]; then
 		IGDMetaData "$option2";
-	elif [ "$option1" = "DEVICEINFO" ]; then
+	elif [ "$option1" = "info" ]; then
 		Deviceinfo "$option2";
 	elif [ "$option1" = "LED" ]; then
 		LEDswitch "$option2";
 	elif [ "$option1" = "KEYLOCK" ]; then
 		keyLockSwitch "$option2";
-	elif [ "$option1" = "TAM" ]; then
-		if [[ $option2 =~ ^[+-]?[0-9]+$ ]] && { [ "$option3" = "GetInfo" ] || [ "$option3" = "ON" ] || [ "$option3" = "OFF" ] || [ "$option3" = "GetMsgs" ];}; then TAM
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "REPEATER" ]; then
-		if [ "$option2" = "1" ]; then Repeaterwlanstate "ON"; # Usually this will not work because there is no connection possible to the Fritz!Repeater as long as WiFi is OFF
-		elif [ "$option2" = "0" ]; then Repeaterwlanstate "OFF";
-		else DisplayArguments
-		fi
+
 	elif [ "$option1" = "REBOOT" ]; then
 		Reboot "$option2"
 	else DisplayArguments
