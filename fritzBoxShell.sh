@@ -21,7 +21,7 @@ source "$DIRECTORY/fritzBoxShellConfig.sh"
 
 # Parsing arguments
 # Example:
-# ./fritzBoxShell.sh --boxip 192.168.178.1 --boxuser foo --boxpw baa wlan_2g 1
+# ./fritzBoxShell.sh --boxip 192.168.178.1 --boxuser foo --boxpw baa 2g 1
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -50,8 +50,8 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # Storing shell parameters in variables
 # Example:
-# ./fritzBoxShell.sh wlan_2g 1
-# $1 = "wlan_2g"
+# ./fritzBoxShell.sh 2g 1
+# $1 = "2g"
 # $2 = "1"
 
 option1="$1"
@@ -300,9 +300,6 @@ IGDDSLLINKstate() {
 
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### ------------------------------ FUNCTION IGDIPstate - TR-064 Protocol -------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 IGDIPstate() {
 		location="/igdupnp/control/WANIPConn1"
@@ -349,32 +346,22 @@ IGDIPstate() {
 
 }
 
-### ------------------------------ FUNCTION Deviceinfo - TR-064 Protocol -------------------------------- ###
-
 Deviceinfo() {
 		location="/upnp/control/deviceinfo"
 		uri="urn:dslforum-org:service:DeviceInfo:1"
 		action='GetInfo'
 
 		readout
-
-#		location="/upnp/control/userif"
-#		uri="urn:dslforum-org:service:UserInterface:1"
-#		action='X_AVM-DE_GetInfo'
-
-#		readout
-
 }
 
 
-### ------------------------------ FUNCTION wlanstate - TR-064 Protocol --------------------------------- ###
 ### ----- Function to switch ON or OFF 2.4 and/or 5 Ghz WiFi and also getting the state of the WiFi ----- ###
 
 wlanstate() {
 
 	# Building the inputs for the SOAP Action based on which WiFi to switch ON/OFF
 
-	if [ "$option1" = "wlan_2g" ] || [ "$option1" = "wlan" ]; then
+	if [ "$option1" = "2g" ] || [ "$option1" = "wlan" ]; then
 		location="/upnp/control/wlanconfig1"
 		uri="urn:dslforum-org:service:WLANConfiguration:1"
 		action='SetEnable'
@@ -384,7 +371,7 @@ wlanstate() {
 		if [ "$option2" = "state" ]; then
 			curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
 			curlOutput2=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-			echo "2,4 Ghz Network $curlOutput2 is $curlOutput1"
+			echo "2,4 Ghz Network $curlOutput2 ist $curlOutput1"
 		fi
 	fi
 
@@ -411,7 +398,6 @@ Reboot() {
 	uri="urn:dslforum-org:service:DeviceConfig:1"
 	action='Reboot'
 	if [[ "$option2" = "Box" ]]; then echo "Sending Reboot command to $1"; curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi
-	if [[ "$option2" = "Repeater" ]]; then echo "Sending Reboot command to $1"; curl -k -m 5 --anyauth -u "$RepeaterUSER:$RepeaterPW" "http://$RepeaterIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi
 }
 
 
@@ -426,10 +412,9 @@ DisplayArguments() {
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
 	echo "|  Action      | Parameter              | Description                                                             |"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
 	echo "| info   		 | state                  | Show information about your Fritz!Box like ModelName, SN, etc.          |"
-	echo "| wlan_2g      | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4 Ghz WiFi             |"
-	echo "| wlan_2g      | STATISTICS             | Statistics for the 2,4 Ghz WiFi easily digestible by telegraf           |"
+	echo "| 2g      	 | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4 Ghz WiFi             |"
+	echo "| 2g      	 | STATISTICS             | Statistics for the 2,4 Ghz WiFi easily digestible by telegraf           |"
 	echo "| wlan_5g      | 0 or 1 or state        | Switching ON, OFF or checking the state of the 5 Ghz WiFi               |"
 	echo "| wlan_5g      | STATISTICS             | Statistics for the 5 Ghz WiFi easily digestible by telegraf             |"
 	echo "| wlan         | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4Ghz and 5 Ghz WiFi    |"
@@ -444,8 +429,7 @@ DisplayArguments() {
 	echo "| IGDWAN       | state                  | Statistics for the WAN LINK easily digestible by telegraf               |"
 	echo "| IGDDSL       | state                  | Statistics for the DSL LINK easily digestible by telegraf               |"
 	echo "| IGDIP        | state                  | Statistics for the DSL IP easily digestible by telegraf                 |"
-	echo "| REPEATER     | 0                      | Switching OFF the WiFi of the Repeater                                  |"
-	echo "| REBOOT       | Box or Repeater        | Rebooting your Fritz!Box or Fritz!Repeater                              |"
+	echo "| REBOOT       | Box			          | Rebooting your Fritz!Box				                                |"
 	echo "| UPNPMetaData | state or <filename>    | Full unformatted output of tr64desc.xml to console or file              |"
 	echo "| IGDMetaData  | state or <filename>    | Full unformatted output of igddesc.xml to console or file               |"
 	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
@@ -466,12 +450,12 @@ then
         fi
 else
 	#If argument was provided, check which function to be called
-	if [ "$option1" = "wlan_2g" ] || [ "$option1" = "wlan_5g" ] || [ "$option1" = "wlan" ]; then
+	if [ "$option1" = "2g" ] || [ "$option1" = "wlan_5g" ] || [ "$option1" = "wlan" ]; then
 		if [ "$option2" = "1" ]; then wlanstate "ON";
 		elif [ "$option2" = "0" ]; then wlanstate "OFF";
 		elif [ "$option2" = "state" ]; then wlanstate "state";
 		elif [ "$option2" = "STATISTICS" ]; then
-			if [ "$option1" = "wlan_2g" ]; then wlanstatistics;
+			if [ "$option1" = "2g" ]; then wlanstatistics;
 			elif [ "$option1" = "wlan_5g" ]; then wlan5statistics;
 			else DisplayArguments
 			fi
