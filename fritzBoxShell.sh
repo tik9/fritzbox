@@ -9,6 +9,36 @@
 
 # AVM, FRITZ!, Fritz!Box and the FRITZ! logo are registered trademarks of AVM GmbH - https://avm.de/
 
+DisplayArguments() {
+	echo "Invalid Action and/or parameter $option1. Possible combinations:"
+	echo "|---------|------------------|-----------|"
+	echo "|  Action  | Parameter       | Description  |"
+	echo "|--------------|-------------|----------------------|"
+	echo "| info   | state    | info about Fritz!Box like ModelName, SN, etc. |"
+	echo "| 2g   | 0 or 1 or state | ON, OFF or checking state WiFi   |"
+	echo "| 2g    | STATISTICS      | WiFi digestible by telegraf  |"
+	echo "| wlan_5g      | 0 or 1 or state        | ON, OFF, state 5 Ghz WiFi|"
+	echo "| wlan_5g      | STATISTICS | digestible by telegraf             |"
+	echo "| wlan         | 0 or 1 or state  |  2,4Ghz and 5 Ghz WiFi    |"
+	echo "|--------------|-------------------------|"
+	echo "| LED   | 0 or 1 | Switching ON (1) or OFF (0) LEDs in front |"
+	echo "| KEYLOCK      | 0 or 1  | Activate (1) or  (0) the Keylock buttons |"
+	echo "|--------------|------------------|"
+	echo "| LAN    | state  | Statistics digestible by telegraf  |"
+	echo "| DSL  | state  | Statistics digestible by telegraf  |"
+	echo "| WAN          | state   | Statistics  digestible by telegraf  |"
+	echo "| LINK         | state  | Statistics WAN DSL LINK digble by telegraf|"
+	echo "| IGDWAN       | state   | WAN LINK digestible by telegraf   |"
+	echo "| IGDDSL       | state   | DSL LINK digestible by telegraf  |"
+	echo "| IGDIP        | state  | Statistics for the DSL IP by telegraf    |"
+	echo "| REBOOT       | Box	    | Rebooting Fritz!Box	|"
+	echo "| UPNPMetaData | state or <filename>    | Full unformatted output of tr64desc.xml to console or file              |"
+	echo "| IGDMetaData  | state or <filename>    | Full unformatted output of igddesc.xml to console or file               |"
+	echo "|--------------|------------------------|"
+	echo "| version      | | Version of the fritzBoxShell.sh   |"
+	echo "|--------------|-----------------|------------|"
+	echo ""
+}
 
 version=1.0.5
 
@@ -17,10 +47,7 @@ dir=$(dirname "$0")
 DIRECTORY=$(cd "$dir" && pwd)
 source "$DIRECTORY/fritzBoxShellConfig.sh"
 
-#*********************** SCRIPT ***********************#
-
 # Parsing arguments
-# Example:
 # ./fritzBoxShell.sh --boxip 192.168.178.1 --boxuser foo --boxpw baa 2g 1
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
@@ -72,12 +99,9 @@ getSID(){
   SID=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "NewX_AVM-DE_UrlSID" | awk -F">" '{print $2}' | awk -F"<" '{print $1}' | awk -F"=" '{print $2}')
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
 ### ----------- FUNCTION LEDswitch FOR SWITCHING ON OR OFF THE LEDS IN front of the Fritz!Box ----------- ###
 ### ----------------------------- Here the TR-064 protocol cannot be used. ------------------------------ ###
-### ----------------------------------------------------------------------------------------------------- ###
 ### ---------------------------------------- AHA-HTTP-Interface ----------------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 LEDswitch(){
 	# Get the a valid SID
@@ -98,8 +122,8 @@ LEDswitch(){
 }
 
 ### --------- FUNCTION keyLockSwitch FOR ACTIVATING or DEACTIVATING the buttons on the Fritz!Box -------- ###
-### ----------------------------- Here the TR-064 protocol cannot be used. ------------------------------ ###
-### ---------------------------------------- AHA-HTTP-Interface ----------------------------------------- ###
+### ------ Here the TR-064 protocol cannot be used. - ###
+### --------AHA-HTTP-Interface------------ ###
 
 keyLockSwitch(){
 	# Get the a valid SID
@@ -112,19 +136,15 @@ keyLockSwitch(){
 	wget -O - "http://$BoxIP/home/home.lua?sid=$SID&logout=1" &>/dev/null
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### -------------------------------- FUNCTION readout - TR-064 Protocol --------------------------------- ###
+### ------ FUNCTION readout - TR-064 Protocol -----###
 ### -- General function for sending the SOAP request via TR-064 Protocol - called from other functions -- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 readout() {
 		curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' |sed -En "s/<(.*)>(.*)/\1 \2/p")
 		echo "$curlOutput1"
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### ------------------------------ FUNCTION UPNPMetaData - TR-064 Protocol ------------------------------ ###
-### ----------------------------------------------------------------------------------------------------- ###
+### ---- FUNCTION UPNPMetaData - TR-064 Protocol -- ###
 
 UPNPMetaData(){
 		location="/tr64desc.xml"
@@ -134,9 +154,7 @@ UPNPMetaData(){
 		fi
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### ------------------------------ FUNCTION IGDMetaData - TR-064 Protocol ------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
+### ------FUNCTION IGDMetaData - TR-064 Protocol- ###
 
 IGDMetaData(){
 		location="/igddesc.xml"
@@ -146,7 +164,7 @@ IGDMetaData(){
 		fi
 }
 
-### ----------------------- FUNCTION wlanstatistics for 2.4 Ghz - TR-064 Protocol ----------------------- ###
+### ------FUNCTION wlanstatistics for 2.4 Ghz - TR-064 Protocol-------- ###
 
 wlanstatistics() {
 		location="/upnp/control/wlanconfig1"
@@ -165,28 +183,26 @@ wlanstatistics() {
 		echo "NewGHz 2.4"
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
 ### ------------------------ FUNCTION wlanstatistics for 5 Ghz - TR-064 Protocol ------------------------ ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 wlan5statistics() {
 		location="/upnp/control/wlanconfig2"
 		uri="urn:dslforum-org:service:WLANConfiguration:2"
-		action='GetStatistics'
+		action=GetStatistics
 
 		readout
 
-		action='GetTotalAssociations'
+		action=GetTotalAssociations
 
 		readout
 
-		action='GetInfo'
+		action=GetInfo
 
 		readout
-		echo "NewGHz 5"
+		echo NewGHz 5
 }
 
-### -------------------------------- FUNCTION LANstate - TR-064 Protocol -------------------------------- ###
+### --- FUNCTION LANstate - TR-064 Protocol------ ###
 
 LANstate() {
 		location="/upnp/control/lanethernetifcfg"
@@ -196,9 +212,7 @@ LANstate() {
 		readout
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### -------------------------------- FUNCTION DSLstate - TR-064 Protocol -------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
+### -----FUNCTION DSLstate - TR-064 Protocol------- ###
 
 DSLstate() {
 		location="/igdupnp/control/wandslifconfig1"
@@ -208,9 +222,7 @@ DSLstate() {
 		readout
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### -------------------------------- FUNCTION WANstate - TR-064 Protocol -------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
+### --- FUNCTION WANstate - TR-064 Protocol  ###
 
 WANstate() {
 		location="/upnp/control/wancommonifconfig1"
@@ -241,9 +253,7 @@ WANstate() {
 
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### ---------------------------- FUNCTION WANDSLLINKstate - TR-064 Protocol ----------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
+### - FUNCTION WANDSLLINKstate - TR-064 Protocol ----------------------------- ###
 
 WANDSLLINKstate() {
 		location="/upnp/control/wandsllinkconfig1"
@@ -254,9 +264,7 @@ WANDSLLINKstate() {
 
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
-### ------------------------------ FUNCTION IGDWANstate - TR-064 Protocol ------------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
+### --- FUNCTION IGDWANstate - TR-064 Protocol -- ###
 
 IGDWANstate() {
 		location="/igdupnp/control/WANCommonIFC1"
@@ -267,9 +275,7 @@ IGDWANstate() {
 
 }
 
-### ----------------------------------------------------------------------------------------------------- ###
 ### ---------------------------- FUNCTION IGDDSLLINKstate - TR-064 Protocol ----------------------------- ###
-### ----------------------------------------------------------------------------------------------------- ###
 
 IGDDSLLINKstate() {
 		location="/igdupnp/control/WANDSLLinkC1"
@@ -368,11 +374,12 @@ wlanstate() {
 		if [ "$option2" = "0" ] || [ "$option2" = "1" ]; then echo "Sending wlan_2g $1"; curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option2</NewEnable></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi # Changing the state of the WIFI
 
 		action='GetInfo'
-		if [ "$option2" = "state" ]; then
+		# if [ "$option2" = "state" ]; then
 			curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+
 			curlOutput2=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-			echo "2,4 Ghz Network $curlOutput2 ist $curlOutput1"
-		fi
+			echo "2,4 Ghz $curlOutput2 ist $curlOutput1"
+		# fi
 	fi
 
 	if [ "$option1" = "wlan_5g" ] || [ "$option1" = "wlan" ]; then
@@ -405,38 +412,6 @@ script_version(){
 		echo "fritzBoxShell.sh version ${version}"
 }
 
-DisplayArguments() {
-	echo ""
-	echo "Invalid Action and/or parameter $option1. Possible combinations:"
-	echo ""
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "|  Action      | Parameter              | Description                                                             |"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| info   		 | state                  | Show information about your Fritz!Box like ModelName, SN, etc.          |"
-	echo "| 2g      	 | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4 Ghz WiFi             |"
-	echo "| 2g      	 | STATISTICS             | Statistics for the 2,4 Ghz WiFi easily digestible by telegraf           |"
-	echo "| wlan_5g      | 0 or 1 or state        | Switching ON, OFF or checking the state of the 5 Ghz WiFi               |"
-	echo "| wlan_5g      | STATISTICS             | Statistics for the 5 Ghz WiFi easily digestible by telegraf             |"
-	echo "| wlan         | 0 or 1 or state        | Switching ON, OFF or checking the state of the 2,4Ghz and 5 Ghz WiFi    |"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| LED          | 0 or 1                 | Switching ON (1) or OFF (0) the LEDs in front of the Fritz!Box          |"
-	echo "| KEYLOCK      | 0 or 1                 | Activate (1) or deactivate (0) the Keylock (buttons de- or activated)   |"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| LAN          | state                  | Statistics for the LAN easily digestible by telegraf                    |"
-	echo "| DSL          | state                  | Statistics for the DSL easily digestible by telegraf                    |"
-	echo "| WAN          | state                  | Statistics for the WAN easily digestible by telegraf                    |"
-	echo "| LINK         | state                  | Statistics for the WAN DSL LINK easily digestible by telegraf           |"
-	echo "| IGDWAN       | state                  | Statistics for the WAN LINK easily digestible by telegraf               |"
-	echo "| IGDDSL       | state                  | Statistics for the DSL LINK easily digestible by telegraf               |"
-	echo "| IGDIP        | state                  | Statistics for the DSL IP easily digestible by telegraf                 |"
-	echo "| REBOOT       | Box			          | Rebooting your Fritz!Box				                                |"
-	echo "| UPNPMetaData | state or <filename>    | Full unformatted output of tr64desc.xml to console or file              |"
-	echo "| IGDMetaData  | state or <filename>    | Full unformatted output of igddesc.xml to console or file               |"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo "| version      |                        | Version of the fritzBoxShell.sh                                         |"
-	echo "|--------------|------------------------|-------------------------------------------------------------------------|"
-	echo ""
-}
 
 # Check if an argument was supplied for shell script
 if [ $# -eq 0 ]
