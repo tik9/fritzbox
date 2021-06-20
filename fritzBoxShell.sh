@@ -7,7 +7,42 @@
 # https://wiki.fhem.de/wiki/FRITZBOX#TR-064
 # https://avm.de/service/schnittstellen/
 
-# AVM, FRITZ!, Fritz!Box and the FRITZ! logo are registered trademarks of AVM GmbH - https://avm.de/
+deviceinfo() {
+	location=/upnp/control/deviceinfo
+	uri="urn:dslforum-org:service:DeviceInfo:1"
+	action=GetInfo
+
+### ------ FUNCTION readout - TR-064 Protocol -----###
+### -- General function for sending the SOAP request via TR-064 Protocol - called from other functions -- ###
+
+	curlOutput1=$(curl -s -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' | sed -En "s/<(.*)>(.*)/\1 \2/p")
+	echo "$curlOutput1"
+}
+
+version=1.0.5
+source fritzBoxShellConfig.sh
+deviceinfo
+
+wlanstate() {
+	echo $boxip
+	# Building inputs for the SOAP Action based on which WiFi to switch ON/OFF
+	# option1=2g
+	option=0
+	# if [ "$option1" = "2g" ] || [ "$option1" = "wlan" ]; then
+	location="/upnp/control/wlanconfig1"
+	uri="urn:dslforum-org:service:WLANConfiguration:1"
+	action=SetEnable
+
+	if [ "$option2" = "0" ] || [ "$option2" = "1" ]; then curl -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option</NewEnable></u:$action></s:Body></s:Envelope>" -s >/dev/null; fi # Changing the state of the WIFI
+
+	action=GetInfo
+	curlOutput1=$(curl -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+
+	curlOutput2=$(curl -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+	echo "2,4 Ghz $curlOutput2 ist $curlOutput1"
+	# fi
+}
+wlanstate
 
 DisplayArguments() {
 	echo "Invalid Action and/or parameter $option1. Possible combinations:"
@@ -40,37 +75,35 @@ DisplayArguments() {
 	echo ""
 }
 
-version=1.0.5
-
-dir=$(dirname "$0")
-
-DIRECTORY=$(cd "$dir" && pwd)
-source "$DIRECTORY/fritzBoxShellConfig.sh"
+# dir=$(dirname "$0")
 
 # Parsing arguments
 # ./fritzBoxShell.sh --boxip 192.168.178.1 --boxuser foo --boxpw baa 2g 1
 POSITIONAL=()
 while [[ $# -gt 0 ]]; do
-  key="$1"
+	key="$1"
 
-  case $key in
-		--boxip)
-    BoxIP="$2"
-    shift ; shift
-    ;;
-		--boxuser)
-    BoxUSER="$2"
-    shift ; shift
-    ;;
-		--boxpw)
-    BoxPW="$2"
-    shift ; shift
-    ;;
-		*)    # unknown option
-    POSITIONAL+=("$1") # save it in an array for later
-    shift # past argument
-    ;;
-  esac
+	case $key in
+	--boxip)
+		boxip="$2"
+		shift
+		shift
+		;;
+	--boxuser)
+		boxuser="$2"
+		shift
+		shift
+		;;
+	--boxpw)
+		boxpw="$2"
+		shift
+		shift
+		;;
+	*)                  # unknown option
+		POSITIONAL+=("$1") # save it in an array for later
+		shift              # past argument
+		;;
+	esac
 done
 
 set -- "${POSITIONAL[@]}" # restore positional parameters
@@ -91,19 +124,19 @@ option3="$3"
 # Global variable for SID
 SID=""
 
-getSID(){
-  location="/upnp/control/deviceconfig"
-  uri="urn:dslforum-org:service:DeviceConfig:1"
-  action='X_AVM-DE_CreateUrlSID'
+getSID() {
+	location="/upnp/control/deviceconfig"
+	uri="urn:dslforum-org:service:DeviceConfig:1"
+	action='X_AVM-DE_CreateUrlSID'
 
-  SID=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "NewX_AVM-DE_UrlSID" | awk -F">" '{print $2}' | awk -F"<" '{print $1}' | awk -F"=" '{print $2}')
+	SID=$(curl -s -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "NewX_AVM-DE_UrlSID" | awk -F">" '{print $2}' | awk -F"<" '{print $1}' | awk -F"=" '{print $2}')
 }
 
 ### ----------- FUNCTION LEDswitch FOR SWITCHING ON OR OFF THE LEDS IN front of the Fritz!Box ----------- ###
 ### ----------------------------- Here the TR-064 protocol cannot be used. ------------------------------ ###
 ### ---------------------------------------- AHA-HTTP-Interface ----------------------------------------- ###
 
-LEDswitch(){
+LEDswitch() {
 	# Get the a valid SID
 	getSID
 
@@ -113,288 +146,239 @@ LEDswitch(){
 	# led_display=0 -> ON
 	# led_display=1 -> DELAYED ON (20200106: not really slower that option 0 - NOT USED)
 	# led_display=2 -> OFF
-	wget -O - --post-data sid=$SID\&led_display=$LEDstate\&apply= http://$BoxIP/system/led_display.lua 2>/dev/null
+	wget -O - --post-data sid=$SID\&led_display=$LEDstate\&apply= http://$boxip/system/led_display.lua 2>/dev/null
 	if [ "$option2" = "0" ]; then echo "LEDs switched OFF"; fi
 	if [ "$option2" = "1" ]; then echo "LEDs switched ON"; fi
 
 	# Logout the "used" SID
-	wget -O - "http://$BoxIP/home/home.lua?sid=$SID&logout=1" &>/dev/null
+	wget -O - "http://$boxip/home/home.lua?sid=$SID&logout=1" &>/dev/null
 }
 
 ### --------- FUNCTION keyLockSwitch FOR ACTIVATING or DEACTIVATING the buttons on the Fritz!Box -------- ###
 ### ------ Here the TR-064 protocol cannot be used. - ###
 ### --------AHA-HTTP-Interface------------ ###
 
-keyLockSwitch(){
+keyLockSwitch() {
 	# Get the a valid SID
 	getSID
-	wget -O - --post-data sid=$SID\&keylock_enabled=$option2\&apply= http://$BoxIP/system/keylocker.lua 2>/dev/null
+	wget -O - --post-data sid=$SID\&keylock_enabled=$option2\&apply= http://$boxip/system/keylocker.lua 2>/dev/null
 	if [ "$option2" = "0" ]; then echo "KeyLock NOT active"; fi
 	if [ "$option2" = "1" ]; then echo "KeyLock active"; fi
 
 	# Logout the "used" SID
-	wget -O - "http://$BoxIP/home/home.lua?sid=$SID&logout=1" &>/dev/null
+	wget -O - "http://$boxip/home/home.lua?sid=$SID&logout=1" &>/dev/null
 }
 
-### ------ FUNCTION readout - TR-064 Protocol -----###
-### -- General function for sending the SOAP request via TR-064 Protocol - called from other functions -- ###
-
-readout() {
-		curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' |sed -En "s/<(.*)>(.*)/\1 \2/p")
-		echo "$curlOutput1"
-}
 
 ### ---- FUNCTION UPNPMetaData - TR-064 Protocol -- ###
 
-UPNPMetaData(){
-		location="/tr64desc.xml"
+UPNPMetaData() {
+	location="/tr64desc.xml"
 
-		if [ "$option2" = "state" ]; then curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location"
-	else curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" >"$DIRECTORY/$option2"
-		fi
+	if [ "$option2" = "state" ]; then
+		curl -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location"
+	else
+		curl -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" >"$DIRECTORY/$option2"
+	fi
 }
 
 ### ------FUNCTION IGDMetaData - TR-064 Protocol- ###
 
-IGDMetaData(){
-		location="/igddesc.xml"
+IGDMetaData() {
+	location="/igddesc.xml"
 
-		if [ "$option2" = "state" ]; then curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location"
-	else curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" >"$DIRECTORY/$option2"
-		fi
+	if [ "$option2" = "state" ]; then
+		curl -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location"
+	else
+		curl -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" >"$DIRECTORY/$option2"
+	fi
 }
 
 ### ------FUNCTION wlanstatistics for 2.4 Ghz - TR-064 Protocol-------- ###
 
 wlanstatistics() {
-		location="/upnp/control/wlanconfig1"
-		uri="urn:dslforum-org:service:WLANConfiguration:1"
-		action='GetStatistics'
+	location="/upnp/control/wlanconfig1"
+	uri="urn:dslforum-org:service:WLANConfiguration:1"
+	action='GetStatistics'
 
-		readout
+	readout
 
-		action='GetTotalAssociations'
+	action='GetTotalAssociations'
 
-		readout
+	readout
 
-		action='GetInfo'
+	action='GetInfo'
 
-		readout
-		echo "NewGHz 2.4"
+	readout
+	echo "NewGHz 2.4"
 }
 
 ### ------------------------ FUNCTION wlanstatistics for 5 Ghz - TR-064 Protocol ------------------------ ###
 
 wlan5statistics() {
-		location="/upnp/control/wlanconfig2"
-		uri="urn:dslforum-org:service:WLANConfiguration:2"
-		action=GetStatistics
+	location="/upnp/control/wlanconfig2"
+	uri="urn:dslforum-org:service:WLANConfiguration:2"
+	action=GetStatistics
 
-		readout
+	readout
 
-		action=GetTotalAssociations
+	action=GetTotalAssociations
 
-		readout
+	readout
 
-		action=GetInfo
+	action=GetInfo
 
-		readout
-		echo NewGHz 5
+	readout
+	echo NewGHz 5
 }
 
 ### --- FUNCTION LANstate - TR-064 Protocol------ ###
 
 LANstate() {
-		location="/upnp/control/lanethernetifcfg"
-		uri="urn:dslforum-org:service:LANEthernetInterfaceConfig:1"
-		action='GetStatistics'
+	location="/upnp/control/lanethernetifcfg"
+	uri="urn:dslforum-org:service:LANEthernetInterfaceConfig:1"
+	action='GetStatistics'
 
-		readout
+	readout
 }
 
 ### -----FUNCTION DSLstate - TR-064 Protocol------- ###
 
 DSLstate() {
-		location="/igdupnp/control/wandslifconfig1"
-		uri="urn:dslforum-org:service:WANDSLInterfaceConfig:1"
-		action='GetInfo'
+	location="/igdupnp/control/wandslifconfig1"
+	uri="urn:dslforum-org:service:WANDSLInterfaceConfig:1"
+	action='GetInfo'
 
-		readout
+	readout
 }
 
 ### --- FUNCTION WANstate - TR-064 Protocol  ###
 
 WANstate() {
-		location="/upnp/control/wancommonifconfig1"
-		uri="urn:dslforum-org:service:WANCommonInterfaceConfig:1"
-		action='GetTotalBytesReceived'
+	location="/upnp/control/wancommonifconfig1"
+	uri="urn:dslforum-org:service:WANCommonInterfaceConfig:1"
+	action='GetTotalBytesReceived'
 
-		readout
+	readout
 
-		action='GetTotalBytesSent'
+	action='GetTotalBytesSent'
 
-		readout
+	readout
 
-		action='GetTotalPacketsReceived'
+	action='GetTotalPacketsReceived'
 
-		readout
+	readout
 
-		action='GetTotalPacketsSent'
+	action='GetTotalPacketsSent'
 
-		readout
+	readout
 
-		action='GetCommonLinkProperties'
+	action='GetCommonLinkProperties'
 
-		readout
+	readout
 
-		#action='GetInfo'
+	#action='GetInfo'
 
-		#readout
+	#readout
 
 }
 
 ### - FUNCTION WANDSLLINKstate - TR-064 Protocol ----------------------------- ###
 
 WANDSLLINKstate() {
-		location="/upnp/control/wandsllinkconfig1"
-		uri="urn:dslforum-org:service:WANDSLLinkConfig:1"
-		action='GetStatistics'
+	location="/upnp/control/wandsllinkconfig1"
+	uri="urn:dslforum-org:service:WANDSLLinkConfig:1"
+	action='GetStatistics'
 
-		readout
+	readout
 
 }
 
 ### --- FUNCTION IGDWANstate - TR-064 Protocol -- ###
 
 IGDWANstate() {
-		location="/igdupnp/control/WANCommonIFC1"
-		uri="urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1"
-		action='GetAddonInfos'
+	location="/igdupnp/control/WANCommonIFC1"
+	uri="urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1"
+	action='GetAddonInfos'
 
-		readout
+	readout
 
 }
 
-### ---------------------------- FUNCTION IGDDSLLINKstate - TR-064 Protocol ----------------------------- ###
+### ----FUNCTION IGDDSLLINKstate - TR-064 Protocol ------ ###
 
 IGDDSLLINKstate() {
-		location="/igdupnp/control/WANDSLLinkC1"
-		uri="urn:schemas-upnp-org:service:WANDSLLinkConfig:1"
-		action='GetDSLLinkInfo'
+	location="/igdupnp/control/WANDSLLinkC1"
+	uri="urn:schemas-upnp-org:service:WANDSLLinkConfig:1"
+	action='GetDSLLinkInfo'
 
-		readout
+	readout
 
-		action='GetAutoConfig'
+	action='GetAutoConfig'
 
-		readout
+	readout
 
-		action='GetModulationType'
+	action='GetModulationType'
 
-		readout
+	readout
 
-		action='GetDestinationAddress'
+	action='GetDestinationAddress'
 
-		readout
+	readout
 
-		action='GetATMEncapsulation'
+	action='GetATMEncapsulation'
 
-		readout
+	readout
 
-		action='GetFCSPreserved'
+	action='GetFCSPreserved'
 
-		readout
+	readout
 
 }
-
 
 IGDIPstate() {
-		location="/igdupnp/control/WANIPConn1"
-		uri="urn:schemas-upnp-org:service:WANIPConnection:1"
-		action='GetConnectionTypeInfo'
+	location="/igdupnp/control/WANIPConn1"
+	uri="urn:schemas-upnp-org:service:WANIPConnection:1"
+	action='GetConnectionTypeInfo'
 
-		readout
+	readout
 
-		action='GetAutoDisconnectTime'
+	action='GetAutoDisconnectTime'
 
-		readout
+	readout
 
-		action='GetIdleDisconnectTime'
+	action='GetIdleDisconnectTime'
 
-		readout
+	readout
 
-		action='GetStatusInfo'
+	action='GetStatusInfo'
 
-		readout
+	readout
 
-		action='GetNATRSIPStatus'
+	action='GetNATRSIPStatus'
 
-		readout
+	readout
 
-		action='GetExternalIPAddress'
+	action='GetExternalIPAddress'
 
-		readout
+	readout
 
-		action='X_AVM_DE_GetExternalIPv6Address'
+	action='X_AVM_DE_GetExternalIPv6Address'
 
-		readout
+	readout
 
-		action='X_AVM_DE_GetIPv6Prefix'
+	action='X_AVM_DE_GetIPv6Prefix'
 
-		readout
+	readout
 
-		action='X_AVM_DE_GetDNSServer'
+	action='X_AVM_DE_GetDNSServer'
 
-		readout
+	readout
 
-		action='X_AVM_DE_GetIPv6DNSServer'
+	action='X_AVM_DE_GetIPv6DNSServer'
 
-		readout
+	readout
 
-}
-
-Deviceinfo() {
-		location="/upnp/control/deviceinfo"
-		uri="urn:dslforum-org:service:DeviceInfo:1"
-		action='GetInfo'
-
-		readout
-}
-
-
-### ----- Function to switch ON or OFF 2.4 and/or 5 Ghz WiFi and also getting the state of the WiFi ----- ###
-
-wlanstate() {
-
-	# Building the inputs for the SOAP Action based on which WiFi to switch ON/OFF
-
-	if [ "$option1" = "2g" ] || [ "$option1" = "wlan" ]; then
-		location="/upnp/control/wlanconfig1"
-		uri="urn:dslforum-org:service:WLANConfiguration:1"
-		action='SetEnable'
-		if [ "$option2" = "0" ] || [ "$option2" = "1" ]; then echo "Sending wlan_2g $1"; curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option2</NewEnable></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi # Changing the state of the WIFI
-
-		action='GetInfo'
-		# if [ "$option2" = "state" ]; then
-			curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-
-			curlOutput2=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-			echo "2,4 Ghz $curlOutput2 ist $curlOutput1"
-		# fi
-	fi
-
-	if [ "$option1" = "wlan_5g" ] || [ "$option1" = "wlan" ]; then
-		location="/upnp/control/wlanconfig2"
-		uri="urn:dslforum-org:service:WLANConfiguration:2"
-		action='SetEnable'
-		if [ "$option2" = "0" ] || [ "$option2" = "1" ]; then echo "Sending wlan_5g $1"; curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option2</NewEnable></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi # Changing the state of the WIFI
-
-		action='GetInfo'
-		if [ "$option2" = "state" ]; then
-			curlOutput1=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-			curlOutput2=$(curl -s -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-			echo "  5 Ghz Network $curlOutput2 is $curlOutput1"
-		fi
-	fi
 }
 
 Reboot() {
@@ -404,79 +388,101 @@ Reboot() {
 	location="/upnp/control/deviceconfig"
 	uri="urn:dslforum-org:service:DeviceConfig:1"
 	action='Reboot'
-	if [[ "$option2" = "Box" ]]; then echo "Sending Reboot command to $1"; curl -k -m 5 --anyauth -u "$BoxUSER:$BoxPW" "http://$BoxIP:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" -s > /dev/null; fi
+	if [[ "$option2" = "Box" ]]; then
+		echo "Sending Reboot command to $1"
+		curl -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" -s >/dev/null
+	fi
 }
 
-
-script_version(){
-		echo "fritzBoxShell.sh version ${version}"
+script_version() {
+	echo "fritzBoxShell.sh version ${version}"
 }
-
 
 # Check if an argument was supplied for shell script
-if [ $# -eq 0 ]
-then
-  DisplayArguments
-elif [ -z "$2" ]
-then
-        if [ "$option1" = "version" ]; then
-                script_version
-        else DisplayArguments
-        fi
-else
-	#If argument was provided, check which function to be called
-	if [ "$option1" = "2g" ] || [ "$option1" = "wlan_5g" ] || [ "$option1" = "wlan" ]; then
-		if [ "$option2" = "1" ]; then wlanstate "ON";
-		elif [ "$option2" = "0" ]; then wlanstate "OFF";
-		elif [ "$option2" = "state" ]; then wlanstate "state";
-		elif [ "$option2" = "STATISTICS" ]; then
-			if [ "$option1" = "2g" ]; then wlanstatistics;
-			elif [ "$option1" = "wlan_5g" ]; then wlan5statistics;
-			else DisplayArguments
-			fi
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "LAN" ]; then
-		if [ "$option2" = "state" ]; then LANstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "DSL" ]; then
-		if [ "$option2" = "state" ]; then DSLstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "WAN" ]; then
-		if [ "$option2" = "state" ]; then WANstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "LINK" ]; then
-		if [ "$option2" = "state" ]; then WANDSLLINKstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "IGDWAN" ]; then
-		if [ "$option2" = "state" ]; then IGDWANstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "IGDDSL" ]; then
-		if [ "$option2" = "state" ]; then IGDDSLLINKstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "IGDIP" ]; then
-		if [ "$option2" = "state" ]; then IGDIPstate "$option2";
-		else DisplayArguments
-		fi
-	elif [ "$option1" = "UPNPMetaData" ]; then
-		UPNPMetaData "$option2";
-	elif [ "$option1" = "IGDMetaData" ]; then
-		IGDMetaData "$option2";
-	elif [ "$option1" = "info" ]; then
-		Deviceinfo "$option2";
-	elif [ "$option1" = "LED" ]; then
-		LEDswitch "$option2";
-	elif [ "$option1" = "KEYLOCK" ]; then
-		keyLockSwitch "$option2";
+# if [ $# -eq 0 ]; then
+# 	DisplayArguments
+# elif [ -z "$2" ]; then
+# 	if [ "$option1" = "version" ]; then
+# 		script_version
+# 	else
+# 		DisplayArguments
+# 	fi
+# else
+# 	#If argument was provided, check which function to be called
+# 	if [ "$option1" = "2g" ] || [ "$option1" = "wlan_5g" ] || [ "$option1" = "wlan" ]; then
+# 		if [ "$option2" = "1" ]; then
+# 			wlanstate "ON"
+# 		elif [ "$option2" = "0" ]; then
+# 			wlanstate "OFF"
+# 		elif [ "$option2" = "state" ]; then
+# 			wlanstate "state"
+# 		elif [ "$option2" = "STATISTICS" ]; then
+# 			if [ "$option1" = "2g" ]; then
+# 				wlanstatistics
+# 			elif [ "$option1" = "wlan_5g" ]; then
+# 				wlan5statistics
+# 			else
+# 				DisplayArguments
+# 			fi
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "LAN" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			LANstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "DSL" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			DSLstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "WAN" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			WANstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "LINK" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			WANDSLLINKstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "IGDWAN" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			IGDWANstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "IGDDSL" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			IGDDSLLINKstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "IGDIP" ]; then
+# 		if [ "$option2" = "state" ]; then
+# 			IGDIPstate "$option2"
+# 		else
+# 			DisplayArguments
+# 		fi
+# 	elif [ "$option1" = "UPNPMetaData" ]; then
+# 		UPNPMetaData "$option2"
+# 	elif [ "$option1" = "IGDMetaData" ]; then
+# 		IGDMetaData "$option2"
+# 	elif [ "$option1" = "info" ]; then
+# 		Deviceinfo "$option2"
+# 	elif [ "$option1" = "LED" ]; then
+# 		LEDswitch "$option2"
+# 	elif [ "$option1" = "KEYLOCK" ]; then
+# 		keyLockSwitch "$option2"
 
-	elif [ "$option1" = "REBOOT" ]; then
-		Reboot "$option2"
-	else DisplayArguments
-	fi
-fi
+# 	elif [ "$option1" = "REBOOT" ]; then
+# 		Reboot "$option2"
+# 	else
+# 		DisplayArguments
+# 	fi
+# fi

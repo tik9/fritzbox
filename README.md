@@ -1,16 +1,3 @@
-<!---
-[![start with why](https://img.shields.io/badge/start%20with-why%3F-brightgreen.svg?style=flat)](http://www.ted.com/talks/simon_sinek_how_great_leaders_inspire_action)
---->
-[![GitHub release](https://img.shields.io/github/release/jhubig/FritzBoxShell/all.svg?maxAge=1)](https://GitHub.com/jhubig/FritzBoxShell/releases/)
-[![GitHub tag](https://img.shields.io/github/tag/jhubig/FritzBoxShell.svg)](https://GitHub.com/jhubig/FritzBoxShell/tags/)
-[![made-with-bash](https://img.shields.io/badge/Made%20with-Bash-1f425f.svg)](https://www.gnu.org/software/bash/)
-[![GitHub license](https://img.shields.io/github/license/jhubig/FritzBoxShell.svg)](https://github.com/jhubig/FritzBoxShell/blob/master/LICENSE)
-[![GitHub issues](https://img.shields.io/github/issues/jhubig/FritzBoxShell.svg)](https://GitHub.com/jhubig/FritzBoxShell/issues/)
-[![GitHub issues-closed](https://img.shields.io/github/issues-closed/jhubig/FritzBoxShell.svg)](https://GitHub.com/jhubig/FritzBoxShell/issues?q=is%3Aissue+is%3Aclosed)
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/jhubig/FritzBoxShell/issues)
-[![GitHub contributors](https://img.shields.io/github/contributors/jhubig/FritzBoxShell.svg)](https://GitHub.com/jhubig/FritzBoxShell/graphs/contributors/)
-[![Github All Releases](https://img.shields.io/github/downloads/jhubig/FritzBoxShell/total.svg)](https://github.com/jhubig/FritzBoxShell)
-[![Github All Releases](https://img.shields.io/github/watchers/jhubig/FritzBoxShell?style=social)](https://github.com/jhubig/FritzBoxShell)
 
 # FritzBoxShell
 
@@ -20,20 +7,15 @@
 
 ## Introduction
 
+Autor: Johannes Hubig <johannes.hubig@gmail.com>     
+Autor: Jürgen Key https://elbosso.github.io/index.html 
+
 The script allows you to control/check your FritzBox from the terminal with a shell script. It is planned to add more functions in the future.
 The shell script uses cURL to create an SOAP request based on the TR-064 protocol to talk to the AVM Fritz!Box and AVM Fritz!Repeater.
 
-To change state of the LEDs in front of the Fritz!Box or activate the keylock (buttons on the can be activated or deactivated) the TR-064 protocol does not offer the possibility. Therefore the AHA-HTTP-Interface is used. This only works from firmware version `7.10` and upwards.
-
-Please raise an issue with your function you would like to add.
-
-### Become a part of it!
 
 If you want to check out if your AVM device actually works with this script, you can do so by executing `fritzBoxShellTest.sh`. It prints for (almost) every Service/Action pair if they delivered data when called.
 
-Authentication is handled exactly as described for `fritzBoxShell.sh`.
-
-The result is a list written to the console containing the names of the checked service and actions followed by the result of the check. Finally, the device type and firmware version are printed (of course only if this functionality was accessible!).
 
 As an example - the result for my Fritz!Box:
 
@@ -107,18 +89,5 @@ After the successful installation and setup following functions should be availa
 | IGDMetaData | STATE or <filename> | Full unformatted output of igddesc.xml to console or file |
 | VERSION | <N/A> | Version of the fritzBoxShell.sh |
 
-### Notes:
-
-* Script will only work if device from where the script is called is in the same network (same WiFi, LAN or VPN connection)
-* Not possible to switch ON the Fritz!Repeater after it has been switched OFF. This only works on Fritz!Box if still 2,4Ghz or 5Ghz is active or VPN connection to Fritz!Box is established
-
-## External Links
-
-Here you can find more information on TR-064 protocol and the available actions in your Fritz!Box or Fritz!Repeater.
-
-* http://fritz.box:49000/tr64desc.xml
-* http://fritz.repeater:49000/tr64desc.xml
-* https://wiki.fhem.de/wiki/FRITZBOX#TR-064
-* https://avm.de/service/schnittstellen/
 
 AVM, FRITZ!, Fritz!Box and the FRITZ! logo are registered trademarks of AVM GmbH - https://avm.de/

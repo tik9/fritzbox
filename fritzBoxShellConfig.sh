@@ -1,11 +1,7 @@
 #!/bin/bash
 
-#******************************************************#
-#*********************** CONFIG ***********************#
-#******************************************************#
-
 # Fritz!Box Config
-[[ -z "$BoxIP" ]] && BoxIP="fritz.box"
+[[ -z "$boxip" ]] && boxip=fritz.box
 [[ -z "$BoxUSER" ]] && BoxUSER="YourUser"
 [[ -z "$BoxPW" ]] && BoxPW="YourPassword"
 

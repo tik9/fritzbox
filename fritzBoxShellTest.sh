@@ -1,9 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC1090
-#************************************************************#
 #** Autor: Jürgen Key https://elbosso.github.io/index.html **#
 #** Autor: Johannes Hubig <johannes.hubig@gmail.com>       **#
-#************************************************************#
 
 # The following script is supposed to test what actions are
 # supported by what device with what version of the firmware
@@ -28,6 +26,6 @@ do
 	[[ "$words" -ge ${minwords[$counter]} ]] && echo -e "\tis working!" || echo -e "\tis not working!"
 	counter=$((counter+1))
 done
-/bin/bash "$DIRECTORY/fritzBoxShell.sh" DEVICEINFO 3 | grep NewModelName
-/bin/bash "$DIRECTORY/fritzBoxShell.sh" DEVICEINFO 3 | grep NewSoftwareVersion
-/bin/bash "$DIRECTORY/fritzBoxShell.sh" VERSION
+/bin/bash "$DIRECTORY/fritzBoxShell.sh" deviceinfo 3 | grep NewModelName
+/bin/bash "$DIRECTORY/fritzBoxShell.sh" deviceinfo 3 | grep NewSoftwareVersion
+/bin/bash "$DIRECTORY/fritzBoxShell.sh" version
