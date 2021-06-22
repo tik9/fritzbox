@@ -2,9 +2,9 @@
 location="/upnp/control/wlanconfig1"
 uri=urn:dslforum-org:service:WLANConfiguration:1
 action=SetEnable
-option=0
-source fritzBoxShellConfig.sh
-echo $boxip
+option=1
+source config.sh
+# echo $boxip
 
 curl -k -m 5 "http://$boxip:49000/upnp/control/wlanconfig1" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option</NewEnable></u:$action></s:Body></s:Envelope>" -s >/dev/null
 

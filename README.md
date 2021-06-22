@@ -1,14 +1,8 @@
-
-# FritzBoxShell
-
-![AVM_FRITZ_Labor_FRITZBox_7490-min.jpg](img/AVM_FRITZ_Labor_FRITZBox_7490-min.jpg?raw=true "AVM_FRITZ_Labor_FRITZBox_7490-min.jpg")
-
-(Image credit: https://avm.de/presse/pressefotos/?q=7490)
-
-## Introduction
+## FritzBoxShell
 
 Autor: Johannes Hubig <johannes.hubig@gmail.com>     
 Autor: Jürgen Key https://elbosso.github.io/index.html 
+Edited: myself
 
 The script allows you to control/check your FritzBox from the terminal with a shell script. It is planned to add more functions in the future.
 The shell script uses cURL to create an SOAP request based on the TR-064 protocol to talk to the AVM Fritz!Box and AVM Fritz!Repeater.

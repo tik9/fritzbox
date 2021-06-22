@@ -9,7 +9,7 @@
 dir=$(dirname "$0")
 
 DIRECTORY=$(cd "$dir" && pwd)
-source "$DIRECTORY/fritzBoxShellConfig.sh"
+source config.sh
 
 ## declare an array variable
 declare -a services=("WLAN_2G"   "WLAN_2G" "WLAN_5G"    "WLAN_2G" "WLAN"  "LAN"   "DSL"   "WAN"   "LINK"  "IGDWAN" "IGDDSL" "IGDIP" "TAM")
