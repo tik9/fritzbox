@@ -2,42 +2,87 @@ from pathlib import Path
 from os import path
 from os.path import join
 import requests
+import xml.etree.ElementTree as ET
+import xmltodict
+import json
+
+headers = {'content-type': 'text/xml'}
+
+control = 'http://192.168.178.1:49000/upnp/control'
+service = 'urn:dslforum-org:service'
+
 
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
-action = 'getinfo'
-# action='setenable'
-
-xml = join(fb_folder, action+'.xml')
-# print(xml)
-enable = 0
-
-url = 'http://192.168.178.1:49000/upnp/control/deviceinfo'
-headers = {'content-type': 'text/xml',
-           'soapaction': 'urn:dslforum-org:service:DeviceInfo:1#' + action}
-body = """<?xml?>
-         </SOAP-ENV:Envelope>"""
-
-response = requests.post(url, data=xml, headers=headers)
-print(response.content)
+# action = 'setenable'
 
 
 def main():
-    change_enable()
+    change_enable(0)
+    # print(xml_)
+    # fb('wlanconfig1', 'setenable')
+    fb('wlanconfig1', 'getinfo')
+    # fb('deviceinfo', 'getinfo')
+    test()
 
+def fb(url, action):
 
-def info():
+    # url = "wlanconfig1"
+    location = control + '/' + url
+    if url == 'deviceinfo':
+        url_ = url
+    else:
+        url_ = 'wlanconfiguration'
+    uri = service + ':' + url_ + ':1#'
 
-    print('')
+    # action = 'setenable'
+    xml_ = join(fb_folder, action + '.xml')
+    headers['soapaction'] = uri + action
 
-# $result=Invoke-WebRequest -Headers @{'soapaction' = 'urn:dslforum-org:service:DeviceInfo:1#getinfo' } -Method post `
-    # -InFile $fb/$action.xml -Uri http://192.168.178.1:49000/upnp/control/deviceinfo -ContentType text/xml
+    with open(xml_, 'r') as f:
+        xml = f.read()
 
+    response = requests.post(location, data=xml, headers=headers)
+    if (url == 'wlanconfig1' and action == 'getinfo'):
+        parseinfo(response)
+        return
+    print(response.content)
 
-def change_enable():
+def test():
+    print(json.dumps(xmltodict.parse("""
+  <mydocument has="an attribute">
+    <and>
+      <many>elements</many>
+      <many>more elements</many>
+    </and>
+    <plus a="complex">
+      element as well
+    </plus>
+  </mydocument>
+"""), indent=4))
+
+def parseinfo(response):
+    # for line in parse:
+    #     print(line)
+    # print(parse.content)
+    tree = ET.fromstring(response.content)
+    # for elt in e.iter():
+    #     print(elt.tag, elt.text)
+
+    # print(tree,type(tree))
+    # print(tree)
+    # print(xmltodict.parse(response.content))
+    # print(json.dumps(xmltodict.parse(response.content)))
+    for elem in tree.iter():
+         print(elem)
+
+def change_enable(enable):
+
     str_ = ''
-    with open(xml, 'r') as file_:
+    action = 'setenable'
+    xml_ = join(fb_folder, action + '.xml')
+    with open(xml_, 'r') as file_:
         # print(file_.read())
         for line in file_:
             if 'NewEnable' in line:
@@ -45,8 +90,9 @@ def change_enable():
                 continue
             str_ += line
 
-        print(str_)
-    # with open(xml, 'w') as file_:file_.write(str_)
+        # print(str_)
+    with open(xml_, 'w') as file_:
+        file_.write(str_)
 
 
 if __name__ == '__main__':

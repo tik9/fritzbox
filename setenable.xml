@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>
     <s:Body>
-        <u:setenable xmlns:u='urn:dslforum-org:service:WLANConfiguration:1'>
+        <u:setenable>
 <NewEnable>0</NewEnable>
         </u:setenable>
     </s:Body>

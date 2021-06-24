@@ -1,7 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC1090
-#** Autor: Jürgen Key https://elbosso.github.io/index.html **#
-#** Autor: Johannes Hubig <johannes.hubig@gmail.com>       **#
 
 # The following script is supposed to test what actions are
 # supported by what device with what version of the firmware
@@ -9,7 +6,7 @@
 dir=$(dirname "$0")
 
 DIRECTORY=$(cd "$dir" && pwd)
-source config.sh
+# source config.sh
 
 ## declare an array variable
 declare -a services=("WLAN_2G"   "WLAN_2G" "WLAN_5G"    "WLAN_2G" "WLAN"  "LAN"   "DSL"   "WAN"   "LINK"  "IGDWAN" "IGDDSL" "IGDIP" "TAM")
