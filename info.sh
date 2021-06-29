@@ -1,25 +1,33 @@
-control=upnp/control
-service=urn:dslforum-org:service
 
-location=$control/wlanconfig1
-uri=$service:wlanconfiguration:1
-action=setenable
+# Write-Output $fb_folder
+action='getinfo'
+# $action='setenable'
+# $url='wlanconfig1'
+url='deviceinfo'
 
-location=$control/deviceinfo
-uri=$service:deviceinfo:1
-action=getinfo
+fb () {
+    control='http://192.168.178.1:49000/upnp/control'
+    service='urn:dslforum-org:service'
 
-grep_=NewSSID
-grep_=NewEnable
+    ho=$HOME
+    if [[ $HOSTNAME == tik ]]; then ho=/mnt/c/Users/User; fi
+    fb_folder=$ho/fritzbox
+      
+    location="$control/$1"
+    urlnew='wlanconfiguration'
+    if [[$url == 'deviceinfo' ]];then
+        $urlnew=$url
+    fi
+    uri=$service:$urlnew:1#
+    xml="$fb_folder/$2.xml"
 
-ho=$HOME
-if [[ $HOSTNAME == tik ]]; then ho=/mnt/c/Users/User; fi
+    result=$(curl $location -H 'Content-Type:text/xml' -H "soapaction:$uri" -d @$xml -s)
+    
+    echo $result
+}
+fb $url $action
 
-fb=$ho/fritzbox
-
-curlOutput=$(curl "http://192.168.178.1:49000/$location" -H 'Content-Type: text/xml' -H "soapaction:$uri#$action" -d @$fb/$action.xml -s)
+# grep_=NewSSID
+# grep_=NewEnable
 #  | grep $grep_  | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-# -s >/dev/null
-
-echo $curlOutput
-# echo $fb
+    # -s >/dev/null

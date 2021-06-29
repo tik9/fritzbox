@@ -20,7 +20,7 @@ deviceinfo() {
 
 version=1.0.5
 # source config.sh
-# deviceinfo
+deviceinfo
 
 wlanstate() {
 	echo $boxip
@@ -41,7 +41,7 @@ wlanstate() {
 	echo "2,4 Ghz $curlOutput2 ist $curlOutput1"
 	# fi
 }
-wlanstate
+# wlanstate
 
 DisplayArguments() {
 	echo "Invalid Action and/or parameter $option1. Possible combinations:"

@@ -1,16 +1,17 @@
 from pathlib import Path
 from os import path
 from os.path import join
+from typing import Pattern
 import requests
 import xml.etree.ElementTree as ET
 import xmltodict
 import json
+import re
 
 headers = {'content-type': 'text/xml'}
 
 control = 'http://192.168.178.1:49000/upnp/control'
 service = 'urn:dslforum-org:service'
-
 
 home = Path.home()
 fb_folder = path.dirname(__file__)
@@ -19,12 +20,55 @@ fb_folder = path.dirname(__file__)
 
 
 def main():
-    change_enable(0)
+    change_enable()
     # print(xml_)
     # fb('wlanconfig1', 'setenable')
-    fb('wlanconfig1', 'getinfo')
+    # fb('wlanconfig1', 'getinfo')
     # fb('deviceinfo', 'getinfo')
-    test()
+    # test()
+
+
+def change_enable():
+
+    str_ = ''
+    action = 'setenable'
+    xml_ = join(fb_folder, action + '.xml')
+
+    newen = '<NewEnable>'
+    close_newen = '</NewEnable>'
+    pattern = newen+'([01])'+close_newen
+    
+    with open(xml_, 'r') as file_:
+        # print(file_.read())
+        for line in file_:
+            if match := re.match(pattern, line):
+                # str_ += '<NewEnable>' + str(enable) + '</NewEnable>\n'
+                val = match.group(1)
+                print('val before', val)
+                val = 1-val
+                print(pattern, val)
+                # re.sub('('+newen+')[01]('+close_newen+')', '\1'+val+'\2', line)
+                continue
+            str_ += line
+
+        # print(str_)
+    # with open(xml_, 'w') as file_:
+        # file_.write(str_)
+
+
+def change_enable2():
+    s = "Ex St"
+    text = '<NewEnable>1</NewEnable>'
+    pattern = '<NewEnable>(.*)</NewEnable>'
+    if match := re.match(pattern, text, re.IGNORECASE):
+        title = match.group(1)
+    print(title)
+
+    # if re.match('<NewEnable>.</NewEnable>', '<NewEnable>1</NewEnable>'):
+    # replaced = re.sub('[01]', 'a', s)
+    # print('Yes')
+    # print(replaced )
+
 
 def fb(url, action):
 
@@ -36,7 +80,6 @@ def fb(url, action):
         url_ = 'wlanconfiguration'
     uri = service + ':' + url_ + ':1#'
 
-    # action = 'setenable'
     xml_ = join(fb_folder, action + '.xml')
     headers['soapaction'] = uri + action
 
@@ -48,6 +91,7 @@ def fb(url, action):
         parseinfo(response)
         return
     print(response.content)
+
 
 def test():
     print(json.dumps(xmltodict.parse("""
@@ -62,6 +106,7 @@ def test():
   </mydocument>
 """), indent=4))
 
+
 def parseinfo(response):
     # for line in parse:
     #     print(line)
@@ -75,24 +120,7 @@ def parseinfo(response):
     # print(xmltodict.parse(response.content))
     # print(json.dumps(xmltodict.parse(response.content)))
     for elem in tree.iter():
-         print(elem)
-
-def change_enable(enable):
-
-    str_ = ''
-    action = 'setenable'
-    xml_ = join(fb_folder, action + '.xml')
-    with open(xml_, 'r') as file_:
-        # print(file_.read())
-        for line in file_:
-            if 'NewEnable' in line:
-                str_ += '<NewEnable>' + str(enable) + '</NewEnable>\n'
-                continue
-            str_ += line
-
-        # print(str_)
-    with open(xml_, 'w') as file_:
-        file_.write(str_)
+        print(elem)
 
 
 if __name__ == '__main__':
