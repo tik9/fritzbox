@@ -2,7 +2,7 @@
 <s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>
     <s:Body>
         <u:setenable>
-<NewEnable>1</NewEnable>
+<NewEnable>0</NewEnable>
         </u:setenable>
     </s:Body>
 </s:Envelope>   

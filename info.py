@@ -16,58 +16,40 @@ service = 'urn:dslforum-org:service'
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
-# action = 'setenable'
-
 
 def main():
     change_enable()
-    # print(xml_)
     # fb('wlanconfig1', 'setenable')
-    # fb('wlanconfig1', 'getinfo')
+    # xml_ = fb('wlanconfig1', 'getinfo')
+    # print(xml)
     # fb('deviceinfo', 'getinfo')
     # test()
 
 
 def change_enable():
 
-    str_ = ''
-    action = 'setenable'
-    xml_ = join(fb_folder, action + '.xml')
+    xml_ = join(fb_folder, 'setenable.xml')
 
-    newen = '<NewEnable>'
-    close_newen = '</NewEnable>'
-    pattern = newen+'([01])'+close_newen
-    
     with open(xml_, 'r') as file_:
-        # print(file_.read())
+        newen = '<NewEnable>'
+        close_newen = '</NewEnable>'
+
+        pattern = newen+'([01])'+close_newen
+        str_ = ''
         for line in file_:
+            print(line)
             if match := re.match(pattern, line):
-                # str_ += '<NewEnable>' + str(enable) + '</NewEnable>\n'
                 val = match.group(1)
-                print('val before', val)
-                val = 1-val
-                print(pattern, val)
-                # re.sub('('+newen+')[01]('+close_newen+')', '\1'+val+'\2', line)
+                val = 1-int(val)
+                pattern = '(' + newen+')[01]('+close_newen+')'
+                str_ += re.sub(pattern,
+                                '\g<1>'+str(val)+'\g<2>', line)
                 continue
             str_ += line
 
         # print(str_)
-    # with open(xml_, 'w') as file_:
-        # file_.write(str_)
-
-
-def change_enable2():
-    s = "Ex St"
-    text = '<NewEnable>1</NewEnable>'
-    pattern = '<NewEnable>(.*)</NewEnable>'
-    if match := re.match(pattern, text, re.IGNORECASE):
-        title = match.group(1)
-    print(title)
-
-    # if re.match('<NewEnable>.</NewEnable>', '<NewEnable>1</NewEnable>'):
-    # replaced = re.sub('[01]', 'a', s)
-    # print('Yes')
-    # print(replaced )
+    with open(xml_, 'w') as file_:
+        file_.write(str_)
 
 
 def fb(url, action):
@@ -85,12 +67,12 @@ def fb(url, action):
 
     with open(xml_, 'r') as f:
         xml = f.read()
-
+    # print(location,xml_,headers)
     response = requests.post(location, data=xml, headers=headers)
-    if (url == 'wlanconfig1' and action == 'getinfo'):
-        parseinfo(response)
-        return
-    print(response.content)
+    # if (url == 'wlanconfig1' and action == 'getinfo'):
+    #     parseinfo(response)
+    #     return
+    return response.content
 
 
 def test():
@@ -113,7 +95,7 @@ def parseinfo(response):
     # print(parse.content)
     tree = ET.fromstring(response.content)
     # for elt in e.iter():
-    #     print(elt.tag, elt.text)
+    #     print(elt.tag, elt.helper_xml)
 
     # print(tree,type(tree))
     # print(tree)
