@@ -1,31 +1,29 @@
 
 # Write-Output $fb_folder
-action='getinfo'
-# $action='setenable'
-# $url='wlanconfig1'
-url='deviceinfo'
+action=getinfo
+action=setenable
+url=deviceinfo
+url=wlanconfig1
 
 fb () {
-    control='http://192.168.178.1:49000/upnp/control'
-    service='urn:dslforum-org:service'
 
     ho=$HOME
     if [[ $HOSTNAME == tik ]]; then ho=/mnt/c/Users/User; fi
     fb_folder=$ho/fritzbox
       
-    location="$control/$1"
-    urlnew='wlanconfiguration'
-    if [[$url == 'deviceinfo' ]];then
-        $urlnew=$url
+    # location="$control/$1"
+    urlnew=wlanconfiguration
+    if [[ $url == 'deviceinfo' ]];then
+        urlnew=$url
     fi
-    uri=$service:$urlnew:1#
-    xml="$fb_folder/$2.xml"
+    # uri=urn:dslforum-org:service:$urlnew:1#
+    xml=$fb_folder/$action.xml
 
-    result=$(curl $location -H 'Content-Type:text/xml' -H "soapaction:$uri" -d @$xml -s)
+    result=$(curl http://192.168.178.1:49000/upnp/control/$url -H Content-Type:text/xml -H soapaction:urn:dslforum-org:service:$urlnew:1#$action -d @$fb_folder/$action.xml -s)
     
     echo $result
 }
-fb $url $action
+fb
 
 # grep_=NewSSID
 # grep_=NewEnable

@@ -1,4 +1,4 @@
-<?xml version='1.0'?>
+<?xml?>
 <s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'>
     <s:Body>
         <u:setenable>

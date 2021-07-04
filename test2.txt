@@ -1,2 +1,0 @@
-foo
-<NewEnable>1</NewEnable>

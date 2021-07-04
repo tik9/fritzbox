@@ -1,12 +1,24 @@
 ## FritzBoxShell
 
+With the files you can access the `Fritzbox` with
+- Bash
+- Powershell
+- Python
+- (Javascript)
+
+You can currently get and set info regarding the device on:
+- Is Wifi on or off
+- Set Wifi on or off
+- Manufacturer, Firmware Version, Fritzbox Version and more
+
+
+### The following lines show what is possible and is not realized by me
+
 Autor: Johannes Hubig <johannes.hubig@gmail.com>     
 Autor: Jürgen Key https://elbosso.github.io/index.html 
-Edited: myself
 
-The script allows you to control/check your FritzBox from the terminal with a shell script. It is planned to add more functions in the future.
+
 The shell script uses cURL to create an SOAP request based on the TR-064 protocol to talk to the AVM Fritz!Box and AVM Fritz!Repeater.
-
 
 If you want to check out if your AVM device actually works with this script, you can do so by executing `fritzBoxShellTest.sh`. It prints for (almost) every Service/Action pair if they delivered data when called.
 
@@ -30,11 +42,11 @@ NewModelName FRITZ!Box 6490 Cable (kdg)
 NewSoftwareVersion 141.06.87
 ```
 
-## Installing, configuring and first script execution
+### Installing, configuring and first script execution
 
 Head over to the Wiki pages to get all the information: https://github.com/jhubig/FritzBoxShell/wiki/Installation,-Configuration-&-First-test
 
-## Arguments/Enviroments
+#### Arguments/Enviroments
 
 You can use variables or arguments. However, arguments are visible in the process list and are therefore not recommended for passwords.
 
@@ -53,24 +65,24 @@ Here an example (This will enable the 2.4 Ghz network on the box with the follow
 | RepeaterUSER | --repeateruser | Usually on Fritz!Repeater no User is existing. Can be left empty. |
 | RepeaterPW | --repeaterpw | Password for user. |
 
-## Usage
+#### Usage
 
 After the successful installation and setup following functions should be available.
 
 | Action | Parameter | Description |
 | --- | --- | --- |
-| WLAN_2G | 0 or 1 or STATE | Switching ON, OFF or checking the state of the 2,4 Ghz WiFi |
-| WLAN_2G  | STATISTICS      | Statistics for the 2,4 Ghz WiFi easily digestible by telegraf        |
-| WLAN_5G | 0 or 1 or STATE | Switching ON, OFF or checking the state of the 5 Ghz WiFi |
-| WLAN_5G  | STATISTICS      | Statistics for the 5 Ghz WiFi easily digestible by telegraf          |
-| WLAN | 0 or 1 or STATE | Switching ON, OFF or checking the state of the 2,4Ghz and 5 Ghz WiFi |
-| TAM | <index> and GetInfo | e.g. TAM 0 GetInfo (gives info about answering machine) |
-| TAM | <index> and ON or OFF | e.g. TAM 0 ON (switches ON the answering machine) |
-| TAM | <index> and GetMsgs | e.g. TAM 0 GetMsgs (gives XML formatted list of messages) |
-| LED | 0 or 1 | Switching ON (1) or OFF (0) the LEDs in front of the Fritz!Box |
-| LED | 0 or 1 | Switching ON (1) or OFF (0) the LEDs in front of the Fritz!Box |
-| KEYLOCK | 0 or 1 | Activate (1) or deactivate (0) the Keylock (buttons de- or activated) |
-| LAN | STATE | Statistics for the LAN easily digestible by telegraf |
+| WLAN_2G | 0 or 1 or STATE | Switching ON, OFF or checking the state of the 2,4 Ghz WiFi
+| WLAN_2G  | STATISTICS      | Statistics for the 2,4 Ghz WiFi easily digestible by telegraf
+| WLAN_5G | 0 or 1 or STATE | Switching ON, OFF or checking the state of the 5 Ghz WiFi 
+| WLAN_5G  | STATISTICS      | Statistics for the 5 Ghz WiFi easily digestible by telegraf 
+| WLAN | 0 or 1 or STATE | Switching ON, OFF or checking the state of the 2,4Ghz and 5 Ghz WiFi
+| TAM | <index> and GetInfo | e.g. TAM 0 GetInfo (gives info about answering machine) 
+| TAM | <index> and ON or OFF | e.g. TAM 0 ON (switches ON the answering machine) 
+| TAM | <index> and GetMsgs | e.g. TAM 0 GetMsgs (gives XML formatted list of messages) 
+| LED | 0 or 1 | Switching ON (1) or OFF (0) the LEDs in front of the Fritz!Box 
+| LED | 0 or 1 | Switching ON (1) or OFF (0) the LEDs in front of the Fritz!Box 
+| KEYLOCK | 0 or 1 | Activate (1) or deactivate (0) the Keylock (buttons de- or activated) 
+| LAN | STATE | Statistics for the LAN easily digestible by telegraf 
 | DSL | STATE | Statistics for the DSL easily digestible by telegraf |
 | WAN | STATE | Statistics for the WAN easily digestible by telegraf |
 | LINK | STATE | Statistics for the WAN DSL LINK easily digestible by telegraf |
@@ -81,7 +93,4 @@ After the successful installation and setup following functions should be availa
 | REBOOT | Box or Repeater | Rebooting your Fritz!Box or Fritz!Repeater |
 | UPNPMetaData | STATE or <filename> | Full unformatted output of tr64desc.xml to console or file |
 | IGDMetaData | STATE or <filename> | Full unformatted output of igddesc.xml to console or file |
-| VERSION | <N/A> | Version of the fritzBoxShell.sh |
-
-
-AVM, FRITZ!, Fritz!Box and the FRITZ! logo are registered trademarks of AVM GmbH - https://avm.de/
+| VERSION | <N/A> | Version of the fritzBoxShell.sh 

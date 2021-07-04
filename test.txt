@@ -1,1 +1,0 @@
-Project("{xxxx-xxxxx-xxxx-xxxx-xx}") = "partofname.Genesis.Printing", "Production\partofname.Genesis.Printing\partofname.Genesis.Printing.csproj", "{xxx-xxx-xxx-xxx-xxxx}" EndProject

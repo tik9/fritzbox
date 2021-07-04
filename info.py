@@ -7,51 +7,51 @@ import re
 
 headers = {'content-type': 'text/xml'}
 
-control = 'http://192.168.178.1:49000/upnp/control'
-service = 'urn:dslforum-org:service'
-
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
 
 def main():
-    change_enable()
-    # xml_ = fb('wlanconfig1', 'setenable')
-    # xml_ = fb('deviceinfo', 'getinfo')
-    xml_ = fb('wlanconfig1', 'getinfo')
-    print(xml_)
+    seten = 'setenable'
+    # change_enable(seten)
+    xml = fb('wlanconfig1',seten )
+
+    settings = {
+        'wlanconfig1': 'newenable',
+        'deviceinfo': 'newsoftwareversion'
+    }
+    sett = 'wlanconfig1'
+    sett = 'deviceinfo'
+    xml = fb(sett, 'getinfo')
+    xml = parse_info(xml, settings[sett])
+    print(xml)
     # test()
 
 
 def fb(url, action):
     print('.. fb started ..')
-    location = control + '/' + url
     if url == 'deviceinfo':
         url_ = url
     else:
         url_ = 'wlanconfiguration'
-    uri = service + ':' + url_ + ':1#'
 
     xml_ = join(fb_folder, action + '.xml')
 
-    headers['soapaction'] = uri + action
+    headers['soapaction'] = 'urn:dslforum-org:service:' + url_ + ':1#' + action
 
     with open(xml_, 'r') as f:
         xml = f.read()
     print('..', xml_, 'parsed..')
-    response = requests.post(location, data=xml, headers=headers)
-    if (url == 'wlanconfig1' and action == 'getinfo'):
-        return parseinfo(response, 'newenable')
-    elif (url == 'deviceinfo' and action == 'getinfo'):
-        return parseinfo(response, 'newsoftwareversion')
+    response = requests.post('http://192.168.178.1:49000/upnp/control/' + url, data=xml, headers=headers)
+    return response
 
 
-def parseinfo(response, key):
+def parse_info(response, key):
     print('..parse_info started..', key)
 
     # print(xmltodict.parse(response.content))
-    xmld = xmltodict.parse(response.content.lower(), dict_constructor=dict)
-    env = xmld['s:envelope']
+    xml = xmltodict.parse(response.content.lower(), dict_constructor=dict)
+    env = xml['s:envelope']
     body = env['s:body']
     inforesp = body['u:getinforesponse']
     # result = inforesp['newenable']
@@ -66,7 +66,6 @@ def change_enable():
 
     with open(xml_, 'r') as file_:
         newen = '<NewEnable>'
-        close_newen = '</NewEnable>'
 
         str_ = ''
         for line in file_:
@@ -82,6 +81,7 @@ def change_enable():
     with open(xml_, 'w') as file_:
         file_.write(str_)
     # return fb('wlanconfig1', 'getinfo')
+
 
 if __name__ == '__main__':
     main()
