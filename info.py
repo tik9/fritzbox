@@ -5,58 +5,50 @@ import requests
 import xmltodict
 import re
 
-headers = {'content-type': 'text/xml'}
-
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
 
 def main():
-    seten = 'setenable'
-    # change_enable(seten)
-    xml = fb('wlanconfig1',seten )
+    change_enable()
+
+    url = 'deviceinfo'
+    url = 'wlanconfig1'
+
+    # xml = fb(url,'setenable' )
+    xml = fb(url, 'getinfo')
+    print(xml)
+
+
+def fb(url, action):
+    print('.. fb started ..')
 
     settings = {
         'wlanconfig1': 'newenable',
         'deviceinfo': 'newsoftwareversion'
     }
-    sett = 'wlanconfig1'
-    sett = 'deviceinfo'
-    xml = fb(sett, 'getinfo')
-    xml = parse_info(xml, settings[sett])
-    print(xml)
-    # test()
-
-
-def fb(url, action):
-    print('.. fb started ..')
+    url_ = 'wlanconfiguration'
     if url == 'deviceinfo':
         url_ = url
-    else:
-        url_ = 'wlanconfiguration'
 
     xml_ = join(fb_folder, action + '.xml')
 
-    headers['soapaction'] = 'urn:dslforum-org:service:' + url_ + ':1#' + action
+    headers = {'content-type': 'text/xml',
+               'soapaction': 'urn:dslforum-org:service:' + url_ + ':1#' + action
+               }
 
     with open(xml_, 'r') as f:
         xml = f.read()
-    print('..', xml_, 'parsed..')
-    response = requests.post('http://192.168.178.1:49000/upnp/control/' + url, data=xml, headers=headers)
-    return response
 
-
-def parse_info(response, key):
-    print('..parse_info started..', key)
-
-    # print(xmltodict.parse(response.content))
+    response = requests.post(
+        'http://192.168.178.1:49000/upnp/control/' + url, data=xml, headers=headers)
+    # return response
     xml = xmltodict.parse(response.content.lower(), dict_constructor=dict)
     env = xml['s:envelope']
     body = env['s:body']
     inforesp = body['u:getinforesponse']
-    # result = inforesp['newenable']
     # result = inforesp
-    result = inforesp[key]
+    result = inforesp[settings[url]]
     return result
 
 
@@ -71,13 +63,13 @@ def change_enable():
         for line in file_:
             if match := re.match(newen+'([01])', line):
                 value = match.group(1)
+                print(value)
                 value = 1-int(value)
                 str_ += re.sub(f'({newen})[01]',
                                f'\g<1>{str(value)}', line)
                 continue
             str_ += line
 
-        # print(str_)
     with open(xml_, 'w') as file_:
         file_.write(str_)
     # return fb('wlanconfig1', 'getinfo')
