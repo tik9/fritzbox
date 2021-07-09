@@ -1,10 +1,14 @@
+$ho="$env:USERPROFILE"
 
-$fb_folder = "$env:USERPROFILE/fritzbox"
-$newen = 'Enable>'
+if ($hostname -eq 't--pc'){
+    $ho='/home/tk'
+}
+$fb_folder = "$ho/fritzbox"
 
 function change_enable() {
     $xml = "$fb_folder/setenable.xml"
     $xmlcontent = Get-Content $xml
+    $newen = 'Enable>'
 
     $match = $xmlcontent | Select-String('([01])') -AllMatches | Foreach-Object { $_.Matches } 
     
@@ -12,32 +16,32 @@ function change_enable() {
     # Write-Host $match
     $value = $groups[0].value
     $value = 1 - $value
-    $xmlcontent -replace "$newen[01]", "$newen$value" | Out-File $xml
-    
+    $xmlcontent -replace "$newen[01]", "$newen$value" | Out-File $xml    
+    $xml = fb 'wlanconfig1' 'setenable'
+    # Write-Host('return seten')
 }
 
-function fb ($url, $action) {
+function fb ($service, $action) {
     
     $settings = @{deviceinfo = 'newsoftwareversion'; wlanconfig1 = 'newenable' }
     
-    $url_ = 'wlanconfiguration'
-    if ($url -eq 'deviceinfo') {
-        $url_ = $url
+    $servicenew = 'wlanconfiguration'
+    if ($service -eq 'deviceinfo') {
+        $servicenew = $service
     }
 
-    $response = Invoke-WebRequest "http://192.168.178.1:49000/upnp/control/$url" -Headers @{'soapaction' = 'urn:dslforum-org:service:' + $url_ + ':1#' + $action } -Method post -InFile "$fb_folder/$action.xml" -ContentType text/xml
+    $response = Invoke-WebRequest "http://192.168.178.1:49000/upnp/control/$service" -Headers @{'soapaction' = 'urn:dslforum-org:service:' + $servicenew + ':1#' + $action } -Method post -InFile "$fb_folder/$action.xml" -ContentType text/xml
 
     [xml]$xml = $response
     # Write-Host $xml
-    return $xml.envelope.body.getinforesponse.$($settings.$url)
+    return $xml.envelope.body.getinforesponse.$($settings.$service)
 }
 
-change_enable
+# change_enable
 
-$url = 'deviceinfo'
-$url = 'wlanconfig1'
+$service = 'deviceinfo'
+$service = 'wlanconfig1'
 
-# $xml = fb $url 'setenable'
-$xml = fb $url 'getinfo'
+$xml = fb $service 'getinfo'
 Write-Host($xml)
 

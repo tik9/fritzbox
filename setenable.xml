@@ -1,7 +1,8 @@
 <?xml?>
 <s:Envelope xmlns:s='http://schemas.xmlsoap.org/soap/envelope'>
     <s:Body>
-        <u:getinfo>
-        </u:getinfo>
+        <u:setenable>
+<NewEnable>0</NewEnable>
+        </u:setenable>
     </s:Body>
-</s:Envelope>
+</s:Envelope>   

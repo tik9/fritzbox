@@ -1,55 +1,88 @@
+from itertools import count
+
 from pathlib import Path
 from os import path
 from os.path import join
 import requests
 import xmltodict
 import re
+from fritzconnection import FritzConnection
+import pprint
 
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
+ip = 'http://192.168.178.1'
+fc = FritzConnection(address=ip)
+
 
 def main():
-    change_enable()
+    pp = pprint.PrettyPrinter(indent=2)
+    keys = ['WANIPConnection', 'GetExternalIPAddress', ]
+    keys = ['WANIPConnection', 'GetInfo']
+    keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
+    keys = ['WLANConfiguration', 'GetInfo',]
+    key='NewStatus'
+    result = fbc(keys)
+    # print(result)
+    # result = div()
+    # pp.pprint(result)
+    # div()
+    for n in count(1):
+        print(n)
 
-    url = 'deviceinfo'
-    url = 'wlanconfig1'
 
-    # xml = fb(url,'setenable' )
-    xml = fb(url, 'getinfo')
-    print(xml)
+def fbc(keys, outkey=''):
+
+    state = fc.call_action(keys[0], keys[1])
+    return state[keys[2]] if 0 <= 2 < len(keys) else state
 
 
-def fb(url, action):
-    print('.. fb started ..')
+def div():
+    action = 'GetStatusInfo'
+    result = fc.call_action(action)
+    return result
+    enable = False
+    fc.call_action('WLANConfiguration', 'SetEnable', NewEnable=enable)
 
-    settings = {
-        'wlanconfig1': 'newenable',
-        'deviceinfo': 'newsoftwareversion'
-    }
-    url_ = 'wlanconfiguration'
-    if url == 'deviceinfo':
-        url_ = url
+
+def fb(service, action):
+
+    service = 'wlanconfig1'
+    service = 'deviceinfo'
+
+    # xml = fb(service, 'getinfo')
+    # print(service, xml)    print('.. fb started ..', service, action)
+    responsekey = 'setenableresponse'
+
+    servicenew = 'deviceinfo' if service == 'deviceinfo' else 'wlanconfiguration'
+    if action == 'getinfo':
+        responsekey = 'getinforesponse'
+        settings = {
+            'wlanconfig1': 'newenable',
+            'deviceinfo': 'newsoftwareversion'
+        }
+        info = settings[service]
 
     xml_ = join(fb_folder, action + '.xml')
 
     headers = {'content-type': 'text/xml',
-               'soapaction': 'urn:dslforum-org:service:' + url_ + ':1#' + action
+               'soapaction': 'urn:dslforum-org:service:' + servicenew + ':1#' + action
                }
 
     with open(xml_, 'r') as f:
         xml = f.read()
 
     response = requests.post(
-        'http://192.168.178.1:49000/upnp/control/' + url, data=xml, headers=headers)
-    # return response
+        ip + ':49000/upnp/control/' + service, data=xml, headers=headers)
+
     xml = xmltodict.parse(response.content.lower(), dict_constructor=dict)
     env = xml['s:envelope']
     body = env['s:body']
-    inforesp = body['u:getinforesponse']
-    # result = inforesp
-    result = inforesp[settings[url]]
-    return result
+    inforesp = body['u:' + responsekey]
+    if action == 'setenable':
+        return inforesp
+    return inforesp[info]
 
 
 def change_enable():
@@ -61,10 +94,9 @@ def change_enable():
 
         str_ = ''
         for line in file_:
-            if match := re.match(newen+'([01])', line):
+            if match := re.match(newen + '([01])', line):
                 value = match.group(1)
-                print(value)
-                value = 1-int(value)
+                value = 1 - int(value)
                 str_ += re.sub(f'({newen})[01]',
                                f'\g<1>{str(value)}', line)
                 continue
@@ -72,7 +104,8 @@ def change_enable():
 
     with open(xml_, 'w') as file_:
         file_.write(str_)
-    # return fb('wlanconfig1', 'getinfo')
+    xml = fb('wlanconfig1', 'setenable')
+    print('change wlanconfig1', xml)
 
 
 if __name__ == '__main__':
