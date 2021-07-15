@@ -21,15 +21,17 @@ def main():
     keys = ['WANIPConnection', 'GetExternalIPAddress', ]
     keys = ['WANIPConnection', 'GetInfo']
     keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
-    keys = ['WLANConfiguration', 'GetInfo',]
-    key='NewStatus'
+    keys = ['WLANConfiguration', 'GetInfo', ]
+    keys = ['DeviceInfo', 'GetInfo']
+    key = 'NewStatus'
     result = fbc(keys)
-    # print(result)
     # result = div()
     # pp.pprint(result)
-    # div()
-    for n in count(1):
-        print(n)
+    # result = div()
+    print(result)
+
+    # for n in count(1):
+    # print(n)
 
 
 def fbc(keys, outkey=''):
@@ -39,17 +41,16 @@ def fbc(keys, outkey=''):
 
 
 def div():
-    action = 'GetStatusInfo'
-    result = fc.call_action(action)
-    return result
+    enable = True
     enable = False
-    fc.call_action('WLANConfiguration', 'SetEnable', NewEnable=enable)
+    # fc.call_action('WLANConfiguration', 'SetEnable', NewEnable=enable)
+    # return result
 
 
 def fb(service, action):
 
-    service = 'wlanconfig1'
-    service = 'deviceinfo'
+    # service = 'wlanconfig1'
+    # service = 'deviceinfo'
 
     # xml = fb(service, 'getinfo')
     # print(service, xml)    print('.. fb started ..', service, action)

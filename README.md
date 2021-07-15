@@ -1,18 +1,47 @@
-## FritzBoxShell
 
-With the files you can access the `Fritzbox` with
+### Goal of the repo
+Access the `Fritzbox` with
 - Bash
 - Powershell
 - Python
 - (Javascript)
 
-You can currently get and set info regarding the device on:
+Get and set info on:
 - Is Wifi on or off
 - Set Wifi on or off
 - Manufacturer, Firmware Version, Fritzbox Version and more
 
+<br>
 
-### The following lines show what is possible and is not realized by me
+### Steps to reach Goal
+1. Start with bash, see below
+2. Continue with Python
+3. Finished? Not yet, Javascript api is missing
+<br>
+
+### Tools needed
+- Vscode
+- Python
+- Pip and fritzconnection
+
+<br>
+
+### Contents
+- [info.py](info.py)
+- [info.ps1](info.ps1)
+- [info.zsh](info.zsh)
+
+<br>
+
+#### Things I learn
+
+ Tool        | About                                                                                             |
+ ----------- | ------------------------
+Soap Protocol | access it with `curl` 
+
+
+
+#### Further: The following is not realized by me
 
 Autor: Johannes Hubig <johannes.hubig@gmail.com>     
 Autor: Jürgen Key https://elbosso.github.io/index.html 
@@ -42,15 +71,9 @@ NewModelName FRITZ!Box 6490 Cable (kdg)
 NewSoftwareVersion 141.06.87
 ```
 
-### Installing, configuring and first script execution
-
-Head over to the Wiki pages to get all the information: https://github.com/jhubig/FritzBoxShell/wiki/Installation,-Configuration-&-First-test
-
 #### Arguments/Enviroments
 
 You can use variables or arguments. However, arguments are visible in the process list and are therefore not recommended for passwords.
-
-If these arguments or environment variables are not set, then the values from the fritzBoxShellConfig.sh are used.
 
 Here an example (This will enable the 2.4 Ghz network on the box with the following IP):
 

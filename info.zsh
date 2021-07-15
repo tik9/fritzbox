@@ -46,10 +46,21 @@ fb () {
     result=$(echo "$result" | grep $settings[$service] )
     echo $result | awk -F'>' '{print $2}' | awk -F'<' '{print $1}'
 }
-# change_enable
 
-service=deviceinfo
+test(){
+    foo=str
+    for (( i=0; i<${#foo}; i++ )); do echo "${foo:$i}"; done
+}
+test2(){
+    num=123
+    for((i=0;i<${#num};i++)); do ((sum+=${num:i})); done
+    echo $sum
+}
+# change_enable
+test2
+
 service=wlanconfig1
+service=deviceinfo
 # service=WANCommonIFC1
 
-fb getinfo
+# fb getinfo
