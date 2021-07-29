@@ -20,21 +20,22 @@ def main():
     pp = pprint.PrettyPrinter(indent=2)
     keys = ['WANIPConnection', 'GetExternalIPAddress', ]
     keys = ['WANIPConnection', 'GetInfo']
-    keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
     keys = ['WLANConfiguration', 'GetInfo', ]
     keys = ['DeviceInfo', 'GetInfo']
+    keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
     key = 'NewStatus'
+    result = div()
     result = fbc(keys)
-    # result = div()
     # pp.pprint(result)
-    # result = div()
-    print(result)
+    # result = change_enable()
+    # result = fb('wlanconfig1', 'getinfo')
+    print('res', result)
 
     # for n in count(1):
     # print(n)
 
 
-def fbc(keys, outkey=''):
+def fbc(keys):
 
     state = fc.call_action(keys[0], keys[1])
     return state[keys[2]] if 0 <= 2 < len(keys) else state
@@ -43,27 +44,17 @@ def fbc(keys, outkey=''):
 def div():
     enable = True
     enable = False
-    # fc.call_action('WLANConfiguration', 'SetEnable', NewEnable=enable)
-    # return result
+    result = fc.call_action('WLANConfiguration', 'SetEnable', NewEnable=enable)
+    return result
 
 
 def fb(service, action):
+    print('..fb started..')
 
-    # service = 'wlanconfig1'
     # service = 'deviceinfo'
-
-    # xml = fb(service, 'getinfo')
-    # print(service, xml)    print('.. fb started ..', service, action)
-    responsekey = 'setenableresponse'
+    # action = 'getinfo'
 
     servicenew = 'deviceinfo' if service == 'deviceinfo' else 'wlanconfiguration'
-    if action == 'getinfo':
-        responsekey = 'getinforesponse'
-        settings = {
-            'wlanconfig1': 'newenable',
-            'deviceinfo': 'newsoftwareversion'
-        }
-        info = settings[service]
 
     xml_ = join(fb_folder, action + '.xml')
 
@@ -80,10 +71,17 @@ def fb(service, action):
     xml = xmltodict.parse(response.content.lower(), dict_constructor=dict)
     env = xml['s:envelope']
     body = env['s:body']
-    inforesp = body['u:' + responsekey]
     if action == 'setenable':
+        inforesp = body['u:setenableresponse']
         return inforesp
-    return inforesp[info]
+
+    settings = {
+        'wlanconfig1': 'newenable',
+        'deviceinfo': 'newsoftwareversion'
+    }
+    inforesp = body['u:getinforesponse']
+
+    return inforesp[settings[service]]
 
 
 def change_enable():
@@ -106,7 +104,7 @@ def change_enable():
     with open(xml_, 'w') as file_:
         file_.write(str_)
     xml = fb('wlanconfig1', 'setenable')
-    print('change wlanconfig1', xml)
+    print('wlanconfig1', xml)
 
 
 if __name__ == '__main__':
