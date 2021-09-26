@@ -1,10 +1,9 @@
-from itertools import count
-
 from pathlib import Path
 from os import path
 from os.path import join
 import requests
-import xmltodict
+import socket
+# import xmltodict
 import re
 from fritzconnection import FritzConnection
 import pprint
@@ -12,18 +11,26 @@ import pprint
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
+documents = path.join(home, 'documents')
+# local_path = path.join('c:' + sep, 'git', 'etc')
+hostname = socket.gethostname()
+if hostname == 't--pc':
+    documents = path.join(home, 'Dokumente')
+
 ip = 'http://192.168.178.1'
-fc = FritzConnection(address=ip)
+with open(path.join(documents, 'irule'), 'r') as file_:
+    p = file_.read()
+if hostname=='t--pc':
+    p = p[:-1]
+
+fc = FritzConnection(password=p)
 
 
 def main():
     pp = pprint.PrettyPrinter(indent=2)
-    keys = ['WANIPConnection', 'GetExternalIPAddress', ]
     keys = ['WANIPConnection', 'GetInfo']
-    keys = ['WLANConfiguration', 'GetInfo', ]
     keys = ['DeviceInfo', 'GetInfo']
     keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
-    key = 'NewStatus'
     result = div()
     result = fbc(keys)
     # pp.pprint(result)
@@ -31,12 +38,8 @@ def main():
     # result = fb('wlanconfig1', 'getinfo')
     print('res', result)
 
-    # for n in count(1):
-    # print(n)
-
 
 def fbc(keys):
-
     state = fc.call_action(keys[0], keys[1])
     return state[keys[2]] if 0 <= 2 < len(keys) else state
 
@@ -68,7 +71,8 @@ def fb(service, action):
     response = requests.post(
         ip + ':49000/upnp/control/' + service, data=xml, headers=headers)
 
-    xml = xmltodict.parse(response.content.lower(), dict_constructor=dict)
+    # xml = xmltodict.parse(response.content.lower(), dict_constructor=dict)
+    xml =1
     env = xml['s:envelope']
     body = env['s:body']
     if action == 'setenable':
