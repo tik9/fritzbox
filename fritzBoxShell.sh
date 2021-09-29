@@ -8,18 +8,28 @@
 # https://avm.de/service/schnittstellen/
 
 deviceinfo() {
+
+	do=Dokumente
+	p=$(cat $ho/$do/irule)
+
 	location=/upnp/control/deviceinfo
 	uri="urn:dslforum-org:service:DeviceInfo:1"
 	action=GetInfo
 
 ### -- General function for sending the SOAP request via TR-064 Protocol - called from other functions -- ###
 
-	curlOutput1=$(curl -s -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "<New" | awk -F"</" '{print $1}' | sed -En "s/<(.*)>(.*)/\1 \2/p")
-	echo "$curlOutput1"
+	curlOutput1=$(curl -s -k -m 5 --anyauth -u "$user:$p" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>") 
+	# | grep "<New" | awk -F"</" '{print $1}' | sed -En "s/<(.*)>(.*)/\1 \2/p"
+	
+	echo $curlOutput1
 }
 
 version=1.0.5
-# source config.sh
+ho=$HOME
+fb_folder=$ho/fritzbox
+source $fb_folder/config.sh
+# echo pw $boxpw
+
 deviceinfo
 
 wlanstate() {

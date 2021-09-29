@@ -1,9 +1,16 @@
-$ho="$env:USERPROFILE"
 
-if ($hostname -eq 't--pc'){
-    $ho='/home/tk'
+$ho = "$env:USERPROFILE"
+$docs = "$ho/documents"
+
+if ($hostname -eq 't--pc') {
+    $ho = '/home/tk'
+    $docs = "$ho/Dokumente"
 }
+$password = Get-Content "$docs/irule"
+$secure_pwd = $password | ConvertTo-SecureString -AsPlainText -Force
+
 $fb_folder = "$ho/fritzbox"
+$hostURL = 'http://192.168.178.1:49000'
 
 function change_enable() {
     $xml = "$fb_folder/setenable.xml"
@@ -29,19 +36,36 @@ function fb ($service, $action) {
     if ($service -eq 'deviceinfo') {
         $servicenew = $service
     }
+    $user = 'fritz3220'
+    # $pair = "$($user):$secure_pwd"
+    # Write-Output "us pa pair $pair"
+    
+    # $auth = [System.Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes($pair))
+    $credential = New-Object System.Management.Automation.PSCredential($user, $secure_pwd)
 
-    $response = Invoke-WebRequest "http://192.168.178.1:49000/upnp/control/$service" -Headers @{'soapaction' = 'urn:dslforum-org:service:' + $servicenew + ':1#' + $action } -Method post -InFile "$fb_folder/$action.xml" -ContentType text/xml
+    $headers = @{'soapaction' = 'urn:dslforum-org:service:' + $servicenew + ':1#' + $action } 
+    # ;Authorization = "Basic $auth"
+    # Write-Output "action $action"
+
+    $response = Invoke-WebRequest `
+        -Method post `
+        -uri ($hosturl + "/upnp/control/$service") `
+        -Headers $headers `
+        -Credential $credential `
+        -AllowUnencryptedAuthentication `
+        -InFile "$fb_folder/$action.xml" `
+        -ContentType text/xml `
 
     [xml]$xml = $response
     # Write-Host $xml
     return $xml.envelope.body.getinforesponse.$($settings.$service)
 }
 
-# change_enable
+change_enable
 
 $service = 'deviceinfo'
 $service = 'wlanconfig1'
 
 $xml = fb $service 'getinfo'
-Write-Host($xml)
+Write-Host('xml' + $xml)
 

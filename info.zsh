@@ -1,8 +1,18 @@
+# curl "http://fritz.box:49000/upnp/control/WANIPConn1" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress" -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:GetExternalIPAddress xmlns:u="urn:schemas-upnp-org:service:WANIPConnection:1" /> </s:Body> </s:Envelope>" -s | grep -Eo '\<[[:digit:]]{1,3}(\.[[:digit:]]{1,3}){3}\>'
+
 declare -A settings
 
+user=fritz3220
+
 ho=$HOME
-if [[ $HOST == tik ]]; then ho=/mnt/c/Users/User; fi
+do=Dokumente
+if [[ $HOST == tik ]]; then ho=/mnt/c/Users/User; do=documents fi
 fb_folder=$ho/fritzbox
+setenable=$fb_folder/setenable.xml
+
+p=$(cat $ho/$do/irule)
+
+# echo passw $p
 
 settings=(
 [wlanconfig1]=NewEnable
@@ -11,13 +21,13 @@ settings=(
 # echo $settings[$service]
 
 change_enable(){
-    value=$(cat $fb_folder/setenable.xml| sed -n 's/.\+\([01]\).\+/\1/p')
+    value=$(cat $setenable| sed -n 's/.\+\([01]\).\+/\1/p')
     value=$(echo 1-$value|bc)
 
-    sed -i "s/[01]/$value/" $fb_folder/setenable.xml
+    sed -i "s/[01]/$value/" $setenable
     service=wlanconfig1
 
-    # fb setenable
+    fb setenable
     # echo $value
     # echo 1 >>setenable.xml
 }
@@ -26,10 +36,6 @@ fb () {
     local action=$1
     # echo $service $action
     ip=http://192.168.178.1
-
-    ho=$HOME
-    if [[ $HOST == tik ]]; then ho=/mnt/c/Users/User; fi
-    fb_folder=$ho/fritzbox
       
     servicenew=wlanconfiguration
     # servicenew=WANIPConnection
@@ -41,26 +47,18 @@ fb () {
 
     xml=$fb_folder/$action.xml
 
-    result=$(curl $ip:49000/upnp/control/$service -H Content-Type:text/xml -H soapaction:urn:dslforum-org:service:$servicenew:1#$action -d @$fb_folder/$action.xml -s)
+    result=$(curl --anyauth $ip:49000/upnp/control/$service -u $user:$p -H Content-Type:text/xml -H soapaction:urn:dslforum-org:service:$servicenew:1#$action -d @$xml -s)
     # echo $result
-    result=$(echo "$result" | grep $settings[$service] )
-    echo $result | awk -F'>' '{print $2}' | awk -F'<' '{print $1}'
+    result=$(echo "$result"| grep $settings[$service] )
+    echo result $result 
+    # | awk -F'>' '{print $2}' | awk -F'<' '{print $1}'
 }
 
-test(){
-    foo=str
-    for (( i=0; i<${#foo}; i++ )); do echo "${foo:$i}"; done
-}
-test2(){
-    num=123
-    for((i=0;i<${#num};i++)); do ((sum+=${num:i})); done
-    echo $sum
-}
-# change_enable
-test2
 
 service=wlanconfig1
-service=deviceinfo
+# service=deviceinfo
 # service=WANCommonIFC1
 
 # fb getinfo
+# change_enable
+fb getinfo
