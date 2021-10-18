@@ -33,7 +33,7 @@ def main():
     keys = ['WANIPConnection', 'GetInfo']
     # keys = ['DeviceInfo', 'GetInfo']
     keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
-    # result = div()
+    result = div()
     result = fbc(keys)
     pp.pprint(result)
     # result = change_enable()

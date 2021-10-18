@@ -1,57 +1,57 @@
 #!/bin/bash
-# shellcheck disable=SC1090,SC2154
-
-# Protokoll TR-064 was used to control the Fritz!Box and
 
 # http://fritz.box:49000/tr64desc.xml
-# https://wiki.fhem.de/wiki/FRITZBOX#TR-064
-# https://avm.de/service/schnittstellen/
+# https://github.com/jhubig/FritzBoxShell/blob/master/fritzBoxShell.sh
 
-deviceinfo() {
-
-	do=Dokumente
-	p=$(cat $ho/$do/irule)
-
-	location=/upnp/control/deviceinfo
-	uri="urn:dslforum-org:service:DeviceInfo:1"
-	action=GetInfo
-
-### -- General function for sending the SOAP request via TR-064 Protocol - called from other functions -- ###
-
-	curlOutput1=$(curl -s -k -m 5 --anyauth -u "$user:$p" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>") 
-	# | grep "<New" | awk -F"</" '{print $1}' | sed -En "s/<(.*)>(.*)/\1 \2/p"
-	
-	echo $curlOutput1
-}
-
-version=1.0.5
-ho=$HOME
-fb_folder=$ho/fritzbox
-source $fb_folder/config.sh
-# echo pw $boxpw
-
-deviceinfo
 
 wlanstate() {
-	echo $boxip
-	# Building inputs for the SOAP Action based on which WiFi to switch ON/OFF
 	# option1=2g
-	option=0
 	# if [ "$option1" = "2g" ] || [ "$option1" = "wlan" ]; then
-	location="/upnp/control/wlanconfig1"
-	uri="urn:dslforum-org:service:WLANConfiguration:1"
-	action=SetEnable
+	# wlanconfig1=2g, wlanconfig2=5g
+	location=/upnp/control/wlanconfig1
+	uri=urn:dslforum-org:service:WLANConfiguration:1
+	
+	# Changing the state of the WIFI
+	action=setenable
+	curloutput=$(curl -k -m 5 --anyauth -u $boxuser:$boxpw "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml -s)
+	# >/dev/null
 
-	if [ "$option2" = "0" ] || [ "$option2" = "1" ]; then curl -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'><NewEnable>$option</NewEnable></u:$action></s:Body></s:Envelope>" -s >/dev/null; fi # Changing the state of the WIFI
+	action=getinfo
+	curlOutput1=$(curl --anyauth -u $boxuser:$boxpw -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
 
-	action=GetInfo
-	curlOutput1=$(curl -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-
-	curlOutput2=$(curl -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-	echo "2,4 Ghz $curlOutput2 ist $curlOutput1"
+	curlOutput2=$(curl --anyauth -u $boxuser:$boxpw -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+	
+	echo 2,4 Ghz $curlOutput2 ist $curlOutput1
 	# fi
 }
-# wlanstate
+
+ho=$HOME
+do=Dokumente
+
+if [[ $HOSTNAME == tik ]] ; then 
+	ho=/mnt/c/users/user
+	do=documents
+fi
+
+fb_folder=$ho/fritzbox
+boxip=192.168.178.1
+
+boxuser=fritz3220
+boxpw=$(cat $ho/$do/irule)
+
+wlanstate
+
+deviceinfo() {
+	location=/upnp/control/deviceinfo
+	uri=urn:dslforum-org:service:DeviceInfo:1
+	action=getinfo
+	curlOutput=$(curl -s -k -m 5 --anyauth -u $boxuser:$boxpw http://$boxip:49000$location -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>") 
+	# | grep "<New" | awk -F"</" '{print $1}' | sed -En "s/<(.*)>(.*)/\1 \2/p"
+	
+	echo $curlOutput
+}
+
+# deviceinfo
 
 DisplayArguments() {
 	echo "Invalid Action and/or parameter $option1. Possible combinations:"
@@ -136,7 +136,7 @@ SID=""
 getSID() {
 	location="/upnp/control/deviceconfig"
 	uri="urn:dslforum-org:service:DeviceConfig:1"
-	action='X_AVM-DE_CreateUrlSID'
+	#action='X_AVM-DE_CreateUrlSID'
 
 	SID=$(curl -s -k -m 5 --anyauth -u "$boxuser:$boxpw" "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>" | grep "NewX_AVM-DE_UrlSID" | awk -F">" '{print $2}' | awk -F"<" '{print $1}' | awk -F"=" '{print $2}')
 }
