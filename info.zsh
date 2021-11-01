@@ -3,12 +3,13 @@ declare -A settings
 
 change_enable(){
     setenable=$fb_folder/setenable.xml
-    
+    echo seten $setenable
+
     value_pre=$(cat $setenable| sed -n -r 's/.+([01]).+/\1/p')
     echo val pre $value_pre
     value=$(echo 1-$value_pre|bc)
 
-    sed -i "s/[01]/$value/" $setenable
+    # sed -i "s/[01]/$value/" $setenable
 
     fb setenable
 }
@@ -26,12 +27,11 @@ settings=(
 [deviceinfo]=NewSoftwareVersion
 )
 
-# change_enable
 
 fb () {
     action=$1
     ip=http://192.168.178.1
-    echo service $service
+    # echo service $service
     servicenew=wlanconfiguration
     # servicenew=WANIPConnection
     
@@ -46,7 +46,7 @@ fb () {
     echo result $result 
     # | awk -F'>' '{print $2}' | awk -F'<' '{print $1}'
 }
-
+-
 
 service=deviceinfo
 service=wlanconfig1

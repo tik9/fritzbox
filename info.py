@@ -11,26 +11,27 @@ import pprint
 home = Path.home()
 fb_folder = path.dirname(__file__)
 
-user='fritz3220'
+boxuser='fritz3220'
 
 documents = path.join(home, 'documents')
-# local_path = path.join('c:' + sep, 'git', 'etc')
+
 hostname = socket.gethostname()
+
 if hostname == 't--pc':
     documents = path.join(home, 'Dokumente')
 
 ip = 'http://192.168.178.1'
 with open(path.join(documents, 'irule'), 'r') as file_:
-    p = file_.read()
+    boxpw = file_.read()
 if hostname=='t--pc':
-    p = p[:-1]
+    boxpw = boxpw[:-1]
 
-fc = FritzConnection(password=p,user=user)
+fc = FritzConnection(password=boxpw,user=boxuser)
 
 
 def main():
     pp = pprint.PrettyPrinter(indent=2)
-    keys = ['WANIPConnection', 'GetInfo']
+    # keys = ['WANIPConnection', 'GetInfo']
     # keys = ['DeviceInfo', 'GetInfo']
     keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
     result = div()
@@ -47,8 +48,8 @@ def fbc(keys):
 
 
 def div():
-    enable = False
     enable = True
+    enable = False
     result = fc.call_action('WLANConfiguration', 'SetEnable', NewEnable=enable)
     return result
 
