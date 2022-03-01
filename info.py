@@ -1,38 +1,14 @@
-from pathlib import Path
 from os import path
 from os.path import join
 import requests
-import socket
-# import xmltodict
 import re
-from fritzconnection import FritzConnection
 import pprint
-
-home = Path.home()
-fb_folder = path.dirname(__file__)
-
-boxuser='fritz3220'
-
-documents = path.join(home, 'documents')
-
-hostname = socket.gethostname()
-
-if hostname == 't--pc':
-    documents = path.join(home, 'Dokumente')
-
-ip = 'http://192.168.178.1'
-with open(path.join(documents, 'irule'), 'r') as file_:
-    boxpw = file_.read()
-if hostname=='t--pc':
-    boxpw = boxpw[:-1]
-
-fc = FritzConnection(password=boxpw,user=boxuser)
-
+from settings import *
 
 def main():
     pp = pprint.PrettyPrinter(indent=2)
     # keys = ['WANIPConnection', 'GetInfo']
-    # keys = ['DeviceInfo', 'GetInfo']
+    keys = ['DeviceInfo', 'GetInfo']
     keys = ['WLANConfiguration', 'GetInfo', 'NewEnable']
     result = div()
     result = fbc(keys)
@@ -62,7 +38,7 @@ def fb(service, action):
 
     servicenew = 'deviceinfo' if service == 'deviceinfo' else 'wlanconfiguration'
 
-    xml_ = join(fb_folder, action + '.xml')
+    xml_ = join(script_folder, action + '.xml')
 
     headers = {'content-type': 'text/xml',
                'soapaction': 'urn:dslforum-org:service:' + servicenew + ':1#' + action
