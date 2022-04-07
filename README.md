@@ -3,7 +3,6 @@
 Access the `Fritzbox` with
 - Bash
 - Powershell
-- Python
 - (Javascript)
 
 Get and set info on:
@@ -14,20 +13,15 @@ Get and set info on:
 <br>
 
 ### Steps to reach Goal
-1. Start with bash, see below
-2. Continue with Python
-3. Finished? Not yet, Javascript api is missing
+1. Use Bash and Zsh
 <br>
 
 ### Tools needed
 - Vscode
-- Python
-- Pip and fritzconnection
 
 <br>
 
 ### Contents
-- [info.py](info.py)
 - [info.ps1](info.ps1)
 - [info.zsh](info.zsh)
 
