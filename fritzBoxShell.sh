@@ -9,35 +9,28 @@ wlanstate() {
 	# if [ "$option1" = "2g" ] || [ "$option1" = "wlan" ]; then
 	# wlanconfig1=2g, wlanconfig2=5g
 	location=/upnp/control/wlanconfig1
-	uri=urn:dslforum-org:service:WLANConfiguration:1
+	uri=urn:dslforum-org:service:wlanconfiguration:1
 	
 	# Changing the state of the WIFI
 	action=setenable
-	curloutput=$(curl -k -m 5 --anyauth -u $boxuser:$boxpw "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml -s)
+	curloutput=$(curl -s --anyauth -u $boxuser:$boxpw "http://$boxip:49000$location"  -H 'Content-Type: text/xml' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml -s)
 	# >/dev/null
 
-	action=getinfo
-	curlOutput1=$(curl --anyauth -u $boxuser:$boxpw -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
-
-	curlOutput2=$(curl --anyauth -u $boxuser:$boxpw -s -k -m 5 "http://$boxip:49000$location" -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+	echo $curloutput
 	
-	echo 2,4 Ghz $curlOutput2 ist $curlOutput1
-	# fi
+	action=getinfo
+	curlOutput1=$(curl -s --anyauth -u $boxuser:$boxpw "http://$boxip:49000$location" -H 'Content-Type: text/xml' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml | grep NewEnable | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+	curlOutput2=$(curl -s --anyauth -u $boxuser:$boxpw -s "http://$boxip:49000$location" -H 'Content-Type: text/xml' -H "SoapAction:$uri#$action" -d @$fb_folder/$action.xml | grep NewSSID | awk -F">" '{print $2}' | awk -F"<" '{print $1}')
+
+	
+	echo $curlOutput2 ist $curlOutput1
 }
 
-ho=$HOME
-do=Dokumente
-
-if [[ $HOSTNAME == tik ]] ; then 
-	ho=/mnt/c/users/user
-	do=documents
-fi
-
-fb_folder=$ho/fritzbox
+fb_folder=$HOME/fritzbox
 boxip=192.168.178.1
 
 boxuser=fritz3220
-boxpw=$(cat $ho/$do/irule)
+boxpw=$(cat $fb_folder/env)
 
 wlanstate
 
@@ -45,7 +38,7 @@ deviceinfo() {
 	location=/upnp/control/deviceinfo
 	uri=urn:dslforum-org:service:DeviceInfo:1
 	action=getinfo
-	curlOutput=$(curl -s -k -m 5 --anyauth -u $boxuser:$boxpw http://$boxip:49000$location -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>") 
+	curlOutput=$(curl -s --anyauth -u $boxuser:$boxpw http://$boxip:49000$location -H 'Content-Type: text/xml; charset="utf-8"' -H "SoapAction:$uri#$action" -d "<?xml version='1.0' encoding='utf-8'?><s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'><s:Body><u:$action xmlns:u='$uri'></u:$action></s:Body></s:Envelope>") 
 	# | grep "<New" | awk -F"</" '{print $1}' | sed -En "s/<(.*)>(.*)/\1 \2/p"
 	
 	echo $curlOutput
